@@ -8,6 +8,7 @@ import SessionHistory from './components/SessionHistory';
 import SettingsModal from './components/SettingsModal';
 import DataBackupModal from './components/DataBackupModal';
 import LockScreen from './components/LockScreen';
+import { cn } from './lib/utils';
 
 export type TabType = 'timer' | 'projects' | 'history';
 
@@ -91,10 +92,10 @@ export default function App() {
   const isLight = settings.theme === 'light';
 
   return (
-    <div className={`min-h-screen flex flex-col font-sans selection:bg-rose-500 selection:text-white transition-colors duration-300 ${isLight
-      ? 'light bg-slate-100 text-slate-800'
-      : 'dark bg-[#090d16] text-slate-100'
-      }`}>
+    <div className={cn(
+      "min-h-screen flex flex-col font-sans selection:bg-rose-500 selection:text-white transition-colors duration-300",
+      isLight ? "light bg-slate-100 text-slate-800" : "dark bg-[#090d16] text-slate-100"
+    )}>
       {/* Passcode Lock Overlay */}
       {isLocked && (
         <LockScreen
@@ -114,10 +115,10 @@ export default function App() {
       )}
 
       {/* Top Header Navbar */}
-      <header className={`sticky top-0 z-40 backdrop-blur-xl border-b transition-colors px-4 py-3 ${isLight
-        ? 'bg-white/80 border-slate-200 shadow-sm'
-        : 'bg-slate-950/80 border-slate-800/80'
-        }`}>
+      <header className={cn(
+        "sticky top-0 z-40 backdrop-blur-xl border-b transition-colors px-4 py-3",
+        isLight ? "bg-white/80 border-slate-200 shadow-sm" : "bg-slate-950/80 border-slate-800/80"
+      )}>
         <div className="max-w-6xl mx-auto flex items-center justify-between">
           {/* Logo & Title */}
           <div className="flex items-center gap-3">
@@ -126,12 +127,12 @@ export default function App() {
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <h1 className={`text-lg font-extrabold tracking-tight font-heading ${isLight ? 'text-slate-900' : 'text-white'}`}>Gojodoro</h1>
+                <h1 className={cn("text-lg font-extrabold tracking-tight font-heading", isLight ? "text-slate-900" : "text-white")}>Gojodoro</h1>
                 <span className="text-[10px] font-semibold bg-rose-500/10 text-rose-500 border border-rose-500/20 px-2 py-0.5 rounded-full">
                   Offline-First
                 </span>
               </div>
-              <p className={`text-[11px] ${isLight ? 'text-slate-500' : 'text-slate-400'}`}>Pomodoro Project Time Tracker</p>
+              <p className={cn("text-[11px]", isLight ? "text-slate-500" : "text-slate-400")}>Pomodoro Project Time Tracker</p>
             </div>
           </div>
 
@@ -140,10 +141,10 @@ export default function App() {
             {/* Quick Theme Toggle Header Button */}
             <button
               onClick={handleToggleTheme}
-              className={`p-2 rounded-xl border transition-colors flex items-center gap-1.5 text-xs font-medium cursor-pointer ${isLight
-                ? 'bg-slate-100 border-slate-300 text-slate-700 hover:bg-slate-200'
-                : 'bg-slate-900/80 border-slate-800 text-slate-300 hover:bg-slate-800'
-                }`}
+              className={cn(
+                "p-2 rounded-xl border transition-colors flex items-center gap-1.5 text-xs font-medium cursor-pointer",
+                isLight ? "bg-slate-100 border-slate-300 text-slate-700 hover:bg-slate-200" : "bg-slate-900/80 border-slate-800 text-slate-300 hover:bg-slate-800"
+              )}
               title={`Switch to ${isLight ? 'Dark' : 'Light'} Mode`}
             >
               {isLight ? <Moon className="w-4 h-4 text-indigo-600" /> : <Sun className="w-4 h-4 text-amber-400" />}
@@ -152,10 +153,10 @@ export default function App() {
 
             <button
               onClick={() => setIsBackupOpen(true)}
-              className={`p-2 rounded-xl border transition-colors flex items-center gap-1.5 text-xs font-medium cursor-pointer ${isLight
-                ? 'bg-slate-100 border-slate-300 text-slate-700 hover:bg-slate-200'
-                : 'bg-slate-900/80 border-slate-800 text-slate-400 hover:text-white hover:bg-slate-800'
-                }`}
+              className={cn(
+                "p-2 rounded-xl border transition-colors flex items-center gap-1.5 text-xs font-medium cursor-pointer",
+                isLight ? "bg-slate-100 border-slate-300 text-slate-700 hover:bg-slate-200" : "bg-slate-900/80 border-slate-800 text-slate-400 hover:text-white hover:bg-slate-800"
+              )}
               title="Import / Export Data"
             >
               <FileJson className="w-4 h-4 text-indigo-500" />
@@ -164,10 +165,10 @@ export default function App() {
 
             <button
               onClick={() => setIsSettingsOpen(true)}
-              className={`p-2 rounded-xl border transition-colors flex items-center gap-1.5 text-xs font-medium cursor-pointer ${isLight
-                ? 'bg-slate-100 border-slate-300 text-slate-700 hover:bg-slate-200'
-                : 'bg-slate-900/80 border-slate-800 text-slate-400 hover:text-white hover:bg-slate-800'
-                }`}
+              className={cn(
+                "p-2 rounded-xl border transition-colors flex items-center gap-1.5 text-xs font-medium cursor-pointer",
+                isLight ? "bg-slate-100 border-slate-300 text-slate-700 hover:bg-slate-200" : "bg-slate-900/80 border-slate-800 text-slate-400 hover:text-white hover:bg-slate-800"
+              )}
               title="Preferences"
             >
               <SettingsIcon className="w-4 h-4 text-slate-500 dark:text-slate-300" />
@@ -177,10 +178,10 @@ export default function App() {
             {settings.isPasscodeEnabled && (
               <button
                 onClick={() => setIsLocked(true)}
-                className={`p-2 rounded-xl border transition-colors cursor-pointer ${isLight
-                  ? 'bg-slate-100 border-slate-300 text-slate-700 hover:text-rose-600 hover:bg-slate-200'
-                  : 'bg-slate-900/80 border-slate-800 text-slate-400 hover:text-rose-400 hover:bg-slate-800'
-                  }`}
+                className={cn(
+                  "p-2 rounded-xl border transition-colors cursor-pointer",
+                  isLight ? "bg-slate-100 border-slate-300 text-slate-700 hover:text-rose-600 hover:bg-slate-200" : "bg-slate-900/80 border-slate-800 text-slate-400 hover:text-rose-400 hover:bg-slate-800"
+                )}
                 title="Lock Workspace"
               >
                 <Lock className="w-4 h-4" />
@@ -194,18 +195,20 @@ export default function App() {
       <main className="flex-1 max-w-6xl w-full mx-auto p-4 md:p-6 pb-24">
         {/* Navigation Tabs */}
         <div className="flex items-center justify-center mb-8">
-          <div className={`flex items-center gap-1 p-1.5 rounded-2xl border shadow-xl transition-colors ${isLight
-            ? 'bg-white border-slate-200 shadow-slate-200/50'
-            : 'bg-slate-900/90 border-slate-800'
-            }`}>
+          <div className={cn(
+            "flex items-center gap-1 p-1.5 rounded-2xl border shadow-xl transition-colors",
+            isLight ? "bg-white border-slate-200 shadow-slate-200/50" : "bg-slate-900/90 border-slate-800"
+          )}>
             <button
               onClick={() => setActiveTab('timer')}
-              className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-semibold transition-all cursor-pointer ${activeTab === 'timer'
-                ? 'bg-rose-500 text-white shadow-lg shadow-rose-500/25'
-                : isLight
-                  ? 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
-                  : 'text-slate-400 hover:text-white hover:bg-slate-800/50'
-                }`}
+              className={cn(
+                "flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-semibold transition-all cursor-pointer",
+                activeTab === 'timer'
+                  ? "bg-rose-500 text-white shadow-lg shadow-rose-500/25"
+                  : isLight
+                    ? "text-slate-600 hover:text-slate-900 hover:bg-slate-100"
+                    : "text-slate-400 hover:text-white hover:bg-slate-800/50"
+              )}
             >
               <TimerIcon className="w-4 h-4" />
               <span>Timer</span>
@@ -213,18 +216,22 @@ export default function App() {
 
             <button
               onClick={() => setActiveTab('projects')}
-              className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-semibold transition-all cursor-pointer ${activeTab === 'projects'
-                ? 'bg-rose-500 text-white shadow-lg shadow-rose-500/25'
-                : isLight
-                  ? 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
-                  : 'text-slate-400 hover:text-white hover:bg-slate-800/50'
-                }`}
+              className={cn(
+                "flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-semibold transition-all cursor-pointer",
+                activeTab === 'projects'
+                  ? "bg-rose-500 text-white shadow-lg shadow-rose-500/25"
+                  : isLight
+                    ? "text-slate-600 hover:text-slate-900 hover:bg-slate-100"
+                    : "text-slate-400 hover:text-white hover:bg-slate-800/50"
+              )}
             >
               <FolderGit2 className="w-4 h-4" />
               <span>Projects & Tasks</span>
               {projects.length > 0 && (
-                <span className={`ml-1 px-1.5 py-0.5 rounded-full text-[10px] ${isLight ? 'bg-slate-200 text-slate-700' : 'bg-slate-800 text-slate-300'
-                  }`}>
+                <span className={cn(
+                  "ml-1 px-1.5 py-0.5 rounded-full text-[10px]",
+                  isLight ? "bg-slate-200 text-slate-700" : "bg-slate-800 text-slate-300"
+                )}>
                   {projects.length}
                 </span>
               )}
@@ -232,12 +239,14 @@ export default function App() {
 
             <button
               onClick={() => setActiveTab('history')}
-              className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-semibold transition-all cursor-pointer ${activeTab === 'history'
-                ? 'bg-rose-500 text-white shadow-lg shadow-rose-500/25'
-                : isLight
-                  ? 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
-                  : 'text-slate-400 hover:text-white hover:bg-slate-800/50'
-                }`}
+              className={cn(
+                "flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-semibold transition-all cursor-pointer",
+                activeTab === 'history'
+                  ? "bg-rose-500 text-white shadow-lg shadow-rose-500/25"
+                  : isLight
+                    ? "text-slate-600 hover:text-slate-900 hover:bg-slate-100"
+                    : "text-slate-400 hover:text-white hover:bg-slate-800/50"
+              )}
             >
               <History className="w-4 h-4" />
               <span>History Log</span>
