@@ -1,11 +1,12 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useQueryState, parseAsString } from 'nuqs';
-import { Play, Pause, RotateCcw, SkipForward, CloudRain, Flame, Coffee, Sparkles, Circle, ArrowRightCircle, CheckCircle2 } from 'lucide-react';
 import { playAlertSound, startAmbientSound, stopAmbientSound } from '../services/audio';
 import { logCompletedSession, db } from '../services/db';
-import { AppSettings, Project, Task, TaskStatus, TaskPriority, TimerMode } from '../types';
-import { STATUS_CONFIG, PRIORITY_CONFIG } from './ProjectManager';
-import { cn } from '../lib/utils';
+import { AppSettings, Project, Task, TaskStatus, TimerMode } from '../types';
+import TimerModeTabs from './timer/TimerModeTabs';
+import TimerTaskSelector from './timer/TimerTaskSelector';
+import TimerDisplay from './timer/TimerDisplay';
+import TimerControls from './timer/TimerControls';
 
 export interface TimerProps {
   settings: AppSettings;
@@ -225,6 +226,15 @@ export default function Timer({
     }
   };
 
+  const handleSelectMode = (newMode: ExtendedTimerMode) => {
+    setIsRunning(false);
+    setMode(newMode);
+    if (newMode === 'work') setTimeLeft(settings.workDuration * 60);
+    else if (newMode === 'shortBreak') setTimeLeft(settings.shortBreakDuration * 60);
+    else if (newMode === 'longBreak') setTimeLeft(settings.longBreakDuration * 60);
+    else setTimeLeft(0);
+  };
+
   const formatTime = (seconds: number): string => {
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
@@ -247,254 +257,46 @@ export default function Timer({
   const strokeDasharray = 2 * Math.PI * 140;
   const strokeDashoffset = strokeDasharray * (1 - Math.min(1, Math.max(0, progressFraction)));
 
-  const isBreakMode = mode === 'shortBreak' || mode === 'longBreak';
-
   return (
     <div className="flex flex-col items-center justify-center w-full max-w-xl mx-auto py-4">
       {/* Mode Switcher Tabs */}
-      <div className="flex items-center gap-1.5 p-1.5 rounded-2xl border border-border bg-card shadow-lg mb-8 transition-colors">
-        <button
-          onClick={() => { setIsRunning(false); setMode('work'); setTimeLeft(settings.workDuration * 60); }}
-          className={cn(
-            "flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold transition-all cursor-pointer",
-            mode === 'work'
-              ? "bg-rose-500 text-white shadow-lg shadow-rose-500/25"
-              : "text-muted-foreground hover:text-foreground hover:bg-accent"
-          )}
-        >
-          <Flame className="w-3.5 h-3.5" />
-          Pomodoro
-        </button>
-
-        <button
-          onClick={() => { setIsRunning(false); setMode('shortBreak'); setTimeLeft(settings.shortBreakDuration * 60); }}
-          className={cn(
-            "flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold transition-all cursor-pointer",
-            mode === 'shortBreak'
-              ? "bg-emerald-500 text-white shadow-lg shadow-emerald-500/25"
-              : "text-muted-foreground hover:text-foreground hover:bg-accent"
-          )}
-        >
-          <Coffee className="w-3.5 h-3.5" />
-          Short Break
-        </button>
-
-        <button
-          onClick={() => { setIsRunning(false); setMode('longBreak'); setTimeLeft(settings.longBreakDuration * 60); }}
-          className={cn(
-            "flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold transition-all cursor-pointer",
-            mode === 'longBreak'
-              ? "bg-indigo-500 text-white shadow-lg shadow-indigo-500/25"
-              : "text-muted-foreground hover:text-foreground hover:bg-accent"
-          )}
-        >
-          <Sparkles className="w-3.5 h-3.5" />
-          Long Break
-        </button>
-
-        <button
-          onClick={() => { setIsRunning(false); setMode('stopwatch'); setTimeLeft(0); }}
-          className={cn(
-            "flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold transition-all cursor-pointer",
-            mode === 'stopwatch'
-              ? "bg-amber-500 text-white shadow-lg shadow-amber-500/25"
-              : "text-muted-foreground hover:text-foreground hover:bg-accent"
-          )}
-        >
-          <RotateCcw className="w-3.5 h-3.5" />
-          Stopwatch
-        </button>
-      </div>
+      <TimerModeTabs mode={mode} onSelectMode={handleSelectMode} />
 
       {/* Task & Project Selector Card */}
-      <div className="w-full glass-panel rounded-2xl p-4 mb-8 flex flex-col md:flex-row items-center justify-between gap-3 border border-border">
-        <div className="flex items-center gap-3 w-full md:w-auto">
-          <div
-            className="w-4 h-4 rounded-full shrink-0 shadow-sm"
-            style={{ backgroundColor: selectedProject ? selectedProject.color : 'hsl(var(--muted-foreground))' }}
-          />
-          <div className="flex flex-col text-left w-full">
-            <span className="text-[10px] uppercase font-bold tracking-wider text-muted-foreground">Assigned Task</span>
-            <div className="flex flex-wrap items-center gap-2">
-              <select
-                value={selectedProjectId}
-                onChange={(e) => {
-                  setSelectedProjectId(e.target.value);
-                  setSelectedTaskId('');
-                }}
-                className="bg-transparent text-sm font-semibold focus:outline-none cursor-pointer border-b border-transparent hover:border-border transition-colors text-foreground"
-              >
-                <option value="" className="bg-card text-card-foreground">Uncategorized</option>
-                {projects.map((p) => (
-                  <option key={p.id} value={p.id} className="bg-card text-card-foreground">
-                    {p.name}
-                  </option>
-                ))}
-              </select>
-
-              {selectedProjectId && availableTasks.length > 0 && (
-                <span className="text-muted-foreground text-xs">/</span>
-              )}
-
-              {selectedProjectId && availableTasks.length > 0 && (
-                <select
-                  value={selectedTaskId}
-                  onChange={(e) => setSelectedTaskId(e.target.value)}
-                  className="bg-transparent text-sm font-medium focus:outline-none cursor-pointer border-b border-transparent hover:border-border transition-colors text-foreground max-w-50 truncate"
-                >
-                  <option value="" className="bg-card text-muted-foreground">Select Task (Optional)</option>
-                  {availableTasks.map((t) => {
-                    const priorityText = t.priority ? `[${t.priority.toUpperCase()}] ` : '';
-                    return (
-                      <option key={t.id} value={t.id} className="bg-card text-card-foreground">
-                        {priorityText}{t.name}
-                      </option>
-                    );
-                  })}
-                </select>
-              )}
-            </div>
-          </div>
-        </div>
-
-        {/* Selected Task Details & Controls */}
-        {selectedTask && (
-          <div className="flex items-center gap-2">
-            {/* Priority Badge */}
-            <span className={cn(
-              "px-2 py-0.5 rounded-lg border text-[10px] uppercase font-semibold",
-              PRIORITY_CONFIG[selectedTask.priority || 'medium']?.badgeClass
-            )}>
-              {selectedTask.priority || 'medium'}
-            </span>
-
-            {/* Status Selector Direct Control */}
-            <select
-              value={selectedTask.status || 'not_started'}
-              onChange={(e) => handleUpdateTaskStatusDirectly(e.target.value as TaskStatus)}
-              className={cn(
-                "px-2 py-0.5 rounded-lg border text-[10px] font-semibold focus:outline-none cursor-pointer",
-                STATUS_CONFIG[selectedTask.status || 'not_started']?.badgeClass
-              )}
-              title="Update Status"
-            >
-              <option value="not_started" className="bg-card text-foreground">Not Started</option>
-              <option value="next" className="bg-card text-foreground">Next</option>
-              <option value="in_progress" className="bg-card text-foreground">In Progress</option>
-              <option value="done" className="bg-card text-foreground">Done</option>
-            </select>
-          </div>
-        )}
-
-        {/* Ambient Sound Toggle */}
-        <button
-          onClick={() => setIsAmbientPlaying(!isAmbientPlaying)}
-          className={cn(
-            "flex items-center gap-2 text-xs font-medium px-3 py-1.5 rounded-xl border transition-all cursor-pointer shrink-0",
-            isAmbientPlaying
-              ? "bg-indigo-500/20 border-indigo-500/50 text-indigo-400 shadow-sm"
-              : "bg-muted border-border text-muted-foreground hover:text-foreground hover:bg-accent"
-          )}
-          title="Toggle ambient background noise"
-        >
-          <CloudRain className="w-3.5 h-3.5" />
-          <span>{isAmbientPlaying ? 'Ambient On' : 'Ambient Off'}</span>
-        </button>
-      </div>
+      <TimerTaskSelector
+        projects={projects}
+        tasks={tasks}
+        selectedProjectId={selectedProjectId}
+        selectedTaskId={selectedTaskId}
+        selectedProject={selectedProject}
+        selectedTask={selectedTask}
+        availableTasks={availableTasks}
+        isAmbientPlaying={isAmbientPlaying}
+        onSelectProject={(projId) => setSelectedProjectId(projId)}
+        onSelectTask={(taskId) => setSelectedTaskId(taskId)}
+        onUpdateTaskStatus={handleUpdateTaskStatusDirectly}
+        onToggleAmbient={() => setIsAmbientPlaying(!isAmbientPlaying)}
+      />
 
       {/* Main Circular Timer */}
-      <div className="relative flex items-center justify-center my-2">
-        <svg className="w-72 h-72 md:w-80 md:h-80 transform -rotate-90">
-          {/* Background circle track */}
-          <circle
-            cx="50%"
-            cy="50%"
-            r="140"
-            className="stroke-border"
-            strokeWidth="12"
-            fill="transparent"
-          />
-          {/* Progress circle */}
-          <circle
-            cx="50%"
-            cy="50%"
-            r="140"
-            className={cn(
-              "transition-all duration-1000 ease-linear",
-              isBreakMode ? 'stroke-emerald-500' : mode === 'stopwatch' ? 'stroke-amber-500' : 'stroke-rose-500'
-            )}
-            strokeWidth="12"
-            strokeDasharray={strokeDasharray}
-            strokeDashoffset={strokeDashoffset}
-            strokeLinecap="round"
-            fill="transparent"
-          />
-        </svg>
-
-        {/* Inner Content */}
-        <div
-          className={cn(
-            "absolute flex flex-col items-center justify-center w-64 h-64 rounded-full glass-card transition-all border border-border shadow-xl",
-            isRunning ? (isBreakMode ? 'timer-active-break' : 'timer-active-work') : ''
-          )}
-        >
-          <span className="text-5xl md:text-6xl font-extrabold font-mono tracking-tight text-foreground">
-            {formatTime(timeLeft)}
-          </span>
-
-          <span className="text-xs font-semibold uppercase tracking-widest mt-2 flex items-center gap-1.5">
-            {isBreakMode ? (
-              <span className="text-emerald-500 font-bold">Break Time</span>
-            ) : mode === 'stopwatch' ? (
-              <span className="text-amber-500 font-bold">Stopwatch</span>
-            ) : (
-              <span className="text-rose-500 font-bold">Focus Phase</span>
-            )}
-          </span>
-
-          {completedCycles > 0 && (
-            <span className="text-[11px] mt-2 px-2.5 py-0.5 rounded-full border border-border bg-muted text-muted-foreground">
-              Completed: {completedCycles} Pomodoros
-            </span>
-          )}
-        </div>
-      </div>
+      <TimerDisplay
+        timeLeft={timeLeft}
+        isRunning={isRunning}
+        mode={mode}
+        completedCycles={completedCycles}
+        strokeDasharray={strokeDasharray}
+        strokeDashoffset={strokeDashoffset}
+        formatTime={formatTime}
+      />
 
       {/* Control Buttons */}
-      <div className="flex items-center gap-4 mt-8">
-        <button
-          onClick={handleReset}
-          className="p-3.5 rounded-2xl border border-border bg-card text-muted-foreground hover:text-foreground hover:bg-accent transition-all cursor-pointer shadow-md hover:scale-105 active:scale-95"
-          title="Reset Timer"
-        >
-          <RotateCcw className="w-5 h-5" />
-        </button>
-
-        <button
-          onClick={handleStartPause}
-          className={cn(
-            "flex items-center gap-3 px-8 py-4 rounded-2xl text-base font-bold transition-all shadow-xl cursor-pointer hover:scale-105 active:scale-95",
-            isRunning
-              ? "bg-muted border border-border text-foreground hover:bg-accent"
-              : isBreakMode
-                ? "bg-linear-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white shadow-emerald-500/25"
-                : mode === 'stopwatch'
-                  ? "bg-linear-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 text-white shadow-amber-500/25"
-                  : "bg-linear-to-r from-rose-500 to-indigo-600 hover:from-rose-600 hover:to-indigo-700 text-white shadow-rose-500/25"
-          )}
-        >
-          {isRunning ? <Pause className="w-6 h-6 fill-current" /> : <Play className="w-6 h-6 fill-current" />}
-          <span>{isRunning ? 'Pause' : 'Start Focus'}</span>
-        </button>
-
-        <button
-          onClick={handleSkip}
-          className="p-3.5 rounded-2xl border border-border bg-card text-muted-foreground hover:text-foreground hover:bg-accent transition-all cursor-pointer shadow-md hover:scale-105 active:scale-95"
-          title="Skip to Next"
-        >
-          <SkipForward className="w-5 h-5" />
-        </button>
-      </div>
+      <TimerControls
+        isRunning={isRunning}
+        mode={mode}
+        onStartPause={handleStartPause}
+        onReset={handleReset}
+        onSkip={handleSkip}
+      />
     </div>
   );
 }
