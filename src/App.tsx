@@ -146,7 +146,7 @@ export default function App() {
         <div className="max-w-6xl mx-auto flex items-center justify-between gap-4">
           {/* Logo & Title */}
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-rose-500 to-indigo-600 flex items-center justify-center shadow-lg shadow-rose-500/20 shrink-0">
+            <div className="w-10 h-10 rounded-xl bg-linear-to-tr from-rose-500 to-indigo-600 flex items-center justify-center shadow-lg shadow-rose-500/20 shrink-0">
               <TimerIcon className="w-5 h-5 text-white" />
             </div>
             <div>

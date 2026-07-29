@@ -255,7 +255,7 @@ export default function KanbanBoard({
               )}
 
               {/* Column Task Cards Stack with Height Limit & Vertical Scroll */}
-              <div className="flex-1 max-h-[540px] overflow-y-auto space-y-3 pr-1">
+              <div className="flex-1 max-h-135 overflow-y-auto space-y-3 pr-1">
                 {colTasks.length === 0 ? (
                   <div className="h-32 border-2 border-dashed border-border/40 rounded-xl flex items-center justify-center text-muted-foreground text-xs italic">
                     No tasks
@@ -335,7 +335,7 @@ export default function KanbanBoard({
                                   <h4
                                     onClick={() => handleStartEditing(task)}
                                     className={cn(
-                                      "text-xs font-semibold leading-snug text-foreground cursor-pointer hover:text-rose-400 transition-colors break-words flex-1",
+                                      "text-xs font-semibold leading-snug text-foreground cursor-pointer hover:text-rose-400 transition-colors wrap-break-word flex-1",
                                       task.status === 'done' && "line-through text-muted-foreground"
                                     )}
                                     title="Click to edit title"

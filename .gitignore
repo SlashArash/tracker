@@ -5,3 +5,5 @@ dist
 .env
 .netlify
 
+.agents/skills/*.local
+.agents/skills/cache/

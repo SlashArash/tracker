@@ -307,7 +307,7 @@ export default function ProjectManager({
 
           <button
             onClick={() => setIsCreatingProject(!isCreatingProject)}
-            className="flex items-center gap-2 bg-gradient-to-r from-rose-500 to-indigo-600 hover:from-rose-600 hover:to-indigo-700 text-white text-xs font-semibold px-4 py-2 rounded-xl transition-all shadow-md shadow-rose-500/20 cursor-pointer shrink-0"
+            className="flex items-center gap-2 bg-linear-to-r from-rose-500 to-indigo-600 hover:from-rose-600 hover:to-indigo-700 text-white text-xs font-semibold px-4 py-2 rounded-xl transition-all shadow-md shadow-rose-500/20 cursor-pointer shrink-0"
           >
             <FolderPlus className="w-4 h-4" />
             <span className="hidden sm:inline">New Project</span>
@@ -318,7 +318,7 @@ export default function ProjectManager({
       {/* Global Command Center: Search & Filter Toolbar */}
       <div className="glass-panel rounded-2xl p-3.5 border border-border/80 flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3 shadow-xs">
         {/* Instant Search Bar */}
-        <div className="relative flex-1 min-w-[200px]">
+        <div className="relative flex-1 min-w-50">
           <Search className="w-4 h-4 absolute left-3 top-1/2 transform -rotate-0 -translate-y-1/2 text-muted-foreground" />
           <input
             type="text"
@@ -568,7 +568,7 @@ export default function ProjectManager({
                         </div>
 
                         {/* Tasks Rows with Height Limit & Vertical Scroll */}
-                        <div className="max-h-[420px] overflow-y-auto space-y-2 pr-1">
+                        <div className="max-h-105 overflow-y-auto space-y-2 pr-1">
                           {sortedTasks.length === 0 ? (
                             <p className="text-xs text-muted-foreground italic py-2 text-center">
                               No tasks match the selected criteria.
@@ -639,7 +639,7 @@ export default function ProjectManager({
                                                 setEditingTaskName(task.name);
                                               }}
                                               className={cn(
-                                                "text-sm font-medium transition-colors break-words flex-1 cursor-pointer hover:text-rose-400",
+                                                "text-sm font-medium transition-colors wrap-break-word flex-1 cursor-pointer hover:text-rose-400",
                                                 task.status === 'done' ? "line-through text-muted-foreground" : "text-foreground"
                                               )}
                                               title="Click to edit title"
