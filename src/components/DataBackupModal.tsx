@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { X, Download, Upload, ShieldCheck, AlertCircle, FileJson, CheckCircle2 } from 'lucide-react';
 import { db, clearAllData, getSettings } from '../services/db';
 import { encryptData, decryptData } from '../services/crypto';
+import { cn } from '../lib/utils';
 
 export interface DataBackupModalProps {
   isOpen: boolean;
@@ -130,16 +131,16 @@ export default function DataBackupModal({ isOpen, onClose, onRefresh }: DataBack
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 light:bg-slate-900/40 backdrop-blur-md p-4">
-      <div className="w-full max-w-lg glass-card rounded-2xl p-6 border border-slate-700 light:border-slate-300 shadow-2xl relative">
-        <div className="flex items-center justify-between pb-4 border-b border-slate-800 light:border-slate-200">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-md p-4">
+      <div className="w-full max-w-lg glass-card rounded-2xl p-6 border border-border shadow-2xl relative text-foreground">
+        <div className="flex items-center justify-between pb-4 border-b border-border">
           <div className="flex items-center gap-2.5">
             <FileJson className="w-5 h-5 text-indigo-400" />
-            <h3 className="text-lg font-bold text-slate-100 light:text-slate-900">Import & Export Data</h3>
+            <h3 className="text-lg font-bold text-foreground">Import & Export Data</h3>
           </div>
           <button
             onClick={onClose}
-            className="p-1 rounded-lg text-slate-400 light:text-slate-500 hover:text-white light:hover:text-slate-900 hover:bg-slate-800 light:hover:bg-slate-200 transition-colors"
+            className="p-1 rounded-lg text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
           >
             <X className="w-5 h-5" />
           </button>
@@ -147,10 +148,12 @@ export default function DataBackupModal({ isOpen, onClose, onRefresh }: DataBack
 
         {message.text && (
           <div
-            className={`mt-4 p-3 rounded-xl border text-xs flex items-center gap-2 ${message.type === 'success'
-              ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-300 light:text-emerald-700'
-              : 'bg-rose-500/10 border-rose-500/30 text-rose-300 light:text-rose-700'
-              }`}
+            className={cn(
+              "mt-4 p-3 rounded-xl border text-xs flex items-center gap-2",
+              message.type === 'success'
+                ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-500"
+                : "bg-rose-500/10 border-rose-500/30 text-rose-500"
+            )}
           >
             {message.type === 'success' ? <CheckCircle2 className="w-4 h-4 shrink-0" /> : <AlertCircle className="w-4 h-4 shrink-0" />}
             <span>{message.text}</span>
@@ -159,12 +162,12 @@ export default function DataBackupModal({ isOpen, onClose, onRefresh }: DataBack
 
         <div className="py-5 space-y-6">
           {/* Export Section */}
-          <div className="bg-slate-900/60 light:bg-slate-50 rounded-xl p-4 border border-slate-800/80 light:border-slate-200 space-y-3">
-            <h4 className="text-sm font-semibold text-slate-100 light:text-slate-900 flex items-center gap-2">
+          <div className="bg-card rounded-xl p-4 border border-border space-y-3">
+            <h4 className="text-sm font-semibold text-foreground flex items-center gap-2">
               <Download className="w-4 h-4 text-rose-400" />
               <span>Export JSON Backup</span>
             </h4>
-            <p className="text-xs text-slate-400 light:text-slate-500">
+            <p className="text-xs text-muted-foreground">
               Download your projects, tasks, and session logs to a JSON file.
             </p>
 
@@ -174,9 +177,9 @@ export default function DataBackupModal({ isOpen, onClose, onRefresh }: DataBack
                 id="encryptExport"
                 checked={useEncryption}
                 onChange={(e) => setUseEncryption(e.target.checked)}
-                className="rounded border-slate-700 light:border-slate-300 text-rose-500 focus:ring-rose-500 bg-slate-900 light:bg-slate-100 cursor-pointer"
+                className="rounded border-border text-rose-500 focus:ring-rose-500 bg-input cursor-pointer"
               />
-              <label htmlFor="encryptExport" className="text-xs text-slate-300 light:text-slate-700 cursor-pointer flex items-center gap-1.5">
+              <label htmlFor="encryptExport" className="text-xs text-foreground cursor-pointer flex items-center gap-1.5">
                 <ShieldCheck className="w-3.5 h-3.5 text-indigo-400" />
                 Encrypt backup with passcode
               </label>
@@ -188,14 +191,14 @@ export default function DataBackupModal({ isOpen, onClose, onRefresh }: DataBack
                 value={exportPasscode}
                 onChange={(e) => setExportPasscode(e.target.value)}
                 placeholder="Enter passcode for file encryption"
-                className="w-full bg-slate-950 light:bg-white border border-slate-700 light:border-slate-300 text-slate-100 light:text-slate-900 rounded-xl px-3 py-2 text-xs focus:outline-none focus:border-rose-500"
+                className="w-full bg-input border border-border text-foreground rounded-xl px-3 py-2 text-xs focus:outline-none focus:border-rose-500"
               />
             )}
 
             <button
               onClick={handleExport}
               disabled={loading}
-              className="w-full bg-slate-800 light:bg-slate-200 hover:bg-slate-700 light:hover:bg-slate-300 text-white light:text-slate-800 font-medium py-2.5 rounded-xl text-xs flex items-center justify-center gap-2 transition-colors cursor-pointer border border-slate-700 light:border-slate-300"
+              className="w-full bg-muted hover:bg-accent text-foreground font-medium py-2.5 rounded-xl text-xs flex items-center justify-center gap-2 transition-colors cursor-pointer border border-border"
             >
               <Download className="w-4 h-4" />
               <span>{loading ? 'Exporting...' : 'Download Backup File'}</span>
@@ -203,12 +206,12 @@ export default function DataBackupModal({ isOpen, onClose, onRefresh }: DataBack
           </div>
 
           {/* Import Section */}
-          <form onSubmit={handleImport} className="bg-slate-900/60 light:bg-slate-50 rounded-xl p-4 border border-slate-800/80 light:border-slate-200 space-y-3">
-            <h4 className="text-sm font-semibold text-slate-100 light:text-slate-900 flex items-center gap-2">
+          <form onSubmit={handleImport} className="bg-card rounded-xl p-4 border border-border space-y-3">
+            <h4 className="text-sm font-semibold text-foreground flex items-center gap-2">
               <Upload className="w-4 h-4 text-emerald-400" />
               <span>Import JSON Backup</span>
             </h4>
-            <p className="text-xs text-slate-400 light:text-slate-500">
+            <p className="text-xs text-muted-foreground">
               Restore your workspace from a previously exported `.json` file.
             </p>
 
@@ -216,7 +219,7 @@ export default function DataBackupModal({ isOpen, onClose, onRefresh }: DataBack
               type="file"
               accept=".json"
               onChange={(e) => setImportFile(e.target.files?.[0] || null)}
-              className="w-full text-xs text-slate-400 light:text-slate-600 file:mr-3 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-slate-800 light:file:bg-slate-200 file:text-white light:file:text-slate-800 hover:file:bg-slate-700 light:hover:file:bg-slate-300 cursor-pointer"
+              className="w-full text-xs text-muted-foreground file:mr-3 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-muted file:text-foreground hover:file:bg-accent cursor-pointer"
             />
 
             <input
@@ -224,7 +227,7 @@ export default function DataBackupModal({ isOpen, onClose, onRefresh }: DataBack
               value={importPasscode}
               onChange={(e) => setImportPasscode(e.target.value)}
               placeholder="Decryption passcode (if file is encrypted)"
-              className="w-full bg-slate-950 light:bg-white border border-slate-700 light:border-slate-300 text-slate-100 light:text-slate-900 rounded-xl px-3 py-2 text-xs focus:outline-none focus:border-emerald-500"
+              className="w-full bg-input border border-border text-foreground rounded-xl px-3 py-2 text-xs focus:outline-none focus:border-emerald-500"
             />
 
             <button

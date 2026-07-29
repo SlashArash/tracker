@@ -105,10 +105,7 @@ export default function App() {
   const isLight = settings.theme === 'light';
 
   return (
-    <div className={cn(
-      "min-h-screen flex flex-col font-sans selection:bg-primary selection:text-primary-foreground transition-colors duration-300 bg-background text-foreground",
-      isLight ? "light" : "dark"
-    )}>
+    <div className="min-h-screen flex flex-col font-sans selection:bg-primary selection:text-primary-foreground transition-colors duration-300 bg-background text-foreground">
       {/* Passcode Lock Overlay */}
       {isLocked && (
         <LockScreen
