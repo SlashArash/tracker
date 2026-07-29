@@ -12,8 +12,11 @@ export interface Task {
   id: string;
   projectId: string;
   name: string;
+  description?: string;
   status: TaskStatus;
   priority: TaskPriority;
+  estimatedPomodoros?: number;
+  dueDate?: string;
   completed: boolean;
   createdAt: string;
 }

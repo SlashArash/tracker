@@ -18,6 +18,10 @@ export default function App() {
   const [isLockSetup, setIsLockSetup] = useState<boolean>(false);
   const [activePasscode, setActivePasscode] = useState<string | null>(null);
 
+  // Focus navigation state
+  const [activeFocusProjectId, setActiveFocusProjectId] = useState<string>('');
+  const [activeFocusTaskId, setActiveFocusTaskId] = useState<string>('');
+
   // App data state
   const [projects, setProjects] = useState<Project[]>([]);
   const [tasks, setTasks] = useState<Task[]>([]);
@@ -110,6 +114,12 @@ export default function App() {
   }
 
   const isLight = settings.theme === 'light';
+
+  const handleStartTaskFocus = (projectId: string, taskId?: string) => {
+    setActiveFocusProjectId(projectId);
+    setActiveFocusTaskId(taskId || '');
+    setActiveTab('timer');
+  };
 
   return (
     <div className="min-h-screen flex flex-col font-sans selection:bg-primary selection:text-primary-foreground transition-colors duration-300 bg-background text-foreground">
@@ -308,6 +318,8 @@ export default function App() {
             settings={settings}
             projects={projects}
             tasks={tasks}
+            initialProjectId={activeFocusProjectId}
+            initialTaskId={activeFocusTaskId}
             onSessionLogged={loadAppData}
           />
         )}
@@ -316,7 +328,9 @@ export default function App() {
           <ProjectManager
             projects={projects}
             tasks={tasks}
+            sessions={sessions}
             onRefresh={loadAppData}
+            onStartTaskFocus={handleStartTaskFocus}
           />
         )}
 

@@ -10,6 +10,8 @@ export interface TimerProps {
   settings: AppSettings;
   projects?: Project[];
   tasks?: Task[];
+  initialProjectId?: string;
+  initialTaskId?: string;
   onSessionLogged?: () => void;
 }
 
@@ -19,15 +21,29 @@ export default function Timer({
   settings,
   projects = [],
   tasks = [],
+  initialProjectId,
+  initialTaskId,
   onSessionLogged
 }: TimerProps) {
   const [mode, setMode] = useState<ExtendedTimerMode>('work');
   const [timeLeft, setTimeLeft] = useState<number>(settings.workDuration * 60);
   const [isRunning, setIsRunning] = useState<boolean>(false);
   const [completedCycles, setCompletedCycles] = useState<number>(0);
-  const [selectedProjectId, setSelectedProjectId] = useState<string>('');
-  const [selectedTaskId, setSelectedTaskId] = useState<string>('');
+  const [selectedProjectId, setSelectedProjectId] = useState<string>(initialProjectId || '');
+  const [selectedTaskId, setSelectedTaskId] = useState<string>(initialTaskId || '');
   const [isAmbientPlaying, setIsAmbientPlaying] = useState<boolean>(false);
+
+  useEffect(() => {
+    if (initialProjectId) {
+      setSelectedProjectId(initialProjectId);
+    }
+  }, [initialProjectId]);
+
+  useEffect(() => {
+    if (initialTaskId) {
+      setSelectedTaskId(initialTaskId);
+    }
+  }, [initialTaskId]);
 
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
