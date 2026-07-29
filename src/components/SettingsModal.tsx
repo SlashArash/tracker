@@ -218,7 +218,11 @@ export default function SettingsModal({
             <div className="grid grid-cols-2 gap-3">
               <button
                 type="button"
-                onClick={() => setTheme('dark')}
+                onClick={async () => {
+                  setTheme('dark');
+                  await saveSettingsBulk({ theme: 'dark' });
+                  onRefreshSettings();
+                }}
                 className={cn(
                   "flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl border text-xs font-semibold transition-all cursor-pointer",
                   theme === 'dark'
@@ -231,7 +235,11 @@ export default function SettingsModal({
               </button>
               <button
                 type="button"
-                onClick={() => setTheme('light')}
+                onClick={async () => {
+                  setTheme('light');
+                  await saveSettingsBulk({ theme: 'light' });
+                  onRefreshSettings();
+                }}
                 className={cn(
                   "flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl border text-xs font-semibold transition-all cursor-pointer",
                   theme === 'light'
