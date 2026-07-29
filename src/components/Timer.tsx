@@ -54,7 +54,8 @@ export default function Timer({
   // Handle ambient noise play state
   useEffect(() => {
     if (isRunning && isAmbientPlaying) {
-      startAmbientSound(settings.ambientSound || 'rain', settings.soundVolume || 0.5);
+      const activeAmbientType = (!settings.ambientSound || settings.ambientSound === 'none') ? 'rain' : settings.ambientSound;
+      startAmbientSound(activeAmbientType, settings.soundVolume || 0.5);
     } else {
       stopAmbientSound();
     }

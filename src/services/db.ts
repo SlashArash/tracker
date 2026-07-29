@@ -30,7 +30,7 @@ export const DEFAULT_SETTINGS: AppSettings = {
   autoStartPomodoros: false,
   soundVolume: 0.7,
   soundAlert: 'chime',
-  ambientSound: 'none',
+  ambientSound: 'rain',
   isPasscodeEnabled: false,
   passcodeHash: null,
   passcodeSalt: null,
@@ -75,6 +75,9 @@ export async function getSettings(): Promise<AppSettings> {
   rows.forEach(item => {
     settingsMap[item.key] = item.value;
   });
+  if (!settingsMap.ambientSound || settingsMap.ambientSound === 'none') {
+    settingsMap.ambientSound = 'rain';
+  }
   return settingsMap;
 }
 
