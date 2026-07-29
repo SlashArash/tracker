@@ -40,8 +40,15 @@ export default function App() {
       const loadedTasks = await db.tasks.toArray();
       const loadedSessions = await db.sessions.toArray();
 
+      const normalizedTasks: Task[] = loadedTasks.map(t => ({
+        ...t,
+        status: t.status || (t.completed ? 'done' : 'not_started'),
+        priority: t.priority || 'medium',
+        completed: t.status ? t.status === 'done' : Boolean(t.completed)
+      }));
+
       setProjects(loadedProjects);
-      setTasks(loadedTasks);
+      setTasks(normalizedTasks);
       setSessions(loadedSessions);
 
       // Check if lock is enabled

@@ -1,8 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Play, Pause, RotateCcw, SkipForward, CloudRain, Flame, Coffee, Sparkles } from 'lucide-react';
+import { Play, Pause, RotateCcw, SkipForward, CloudRain, Flame, Coffee, Sparkles, Circle, ArrowRightCircle, CheckCircle2 } from 'lucide-react';
 import { playAlertSound, startAmbientSound, stopAmbientSound } from '../services/audio';
-import { logCompletedSession } from '../services/db';
-import { AppSettings, Project, Task, TimerMode } from '../types';
+import { logCompletedSession, db } from '../services/db';
+import { AppSettings, Project, Task, TaskStatus, TaskPriority, TimerMode } from '../types';
+import { STATUS_CONFIG, PRIORITY_CONFIG } from './ProjectManager';
 import { cn } from '../lib/utils';
 
 export interface TimerProps {
@@ -30,11 +31,15 @@ export default function Timer({
 
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  const availableTasks = tasks.filter(t => t.projectId === selectedProjectId && !t.completed);
+  const availableTasks = tasks
+    .filter(t => t.projectId === selectedProjectId && t.status !== 'done' && !t.completed)
+    .sort((a, b) => {
+      const priorityOrder: Record<string, number> = { urgent: 4, high: 3, medium: 2, low: 1 };
+      return (priorityOrder[b.priority || 'medium'] || 2) - (priorityOrder[a.priority || 'medium'] || 2);
+    });
+
   const selectedProject = projects.find(p => p.id === selectedProjectId);
   const selectedTask = tasks.find(t => t.id === selectedTaskId);
-
-  const isLight = settings.theme === 'light';
 
   // Sync timer duration when settings or mode change (if timer is stopped)
   useEffect(() => {
@@ -129,8 +134,27 @@ export default function Timer({
     }
   };
 
-  const handleStartPause = () => {
-    setIsRunning(!isRunning);
+  const handleStartPause = async () => {
+    const newIsRunning = !isRunning;
+    setIsRunning(newIsRunning);
+
+    // When starting a session, auto-transition assigned task from Not Started / Next -> In Progress
+    if (newIsRunning && selectedTask && (selectedTask.status === 'not_started' || selectedTask.status === 'next')) {
+      await db.tasks.update(selectedTask.id, { status: 'in_progress' });
+      if (onSessionLogged) onSessionLogged();
+    }
+  };
+
+  const handleUpdateTaskStatusDirectly = async (newStatus: TaskStatus) => {
+    if (!selectedTask) return;
+    await db.tasks.update(selectedTask.id, {
+      status: newStatus,
+      completed: newStatus === 'done'
+    });
+    if (newStatus === 'done') {
+      setSelectedTaskId('');
+    }
+    if (onSessionLogged) onSessionLogged();
   };
 
   const handleReset = () => {
@@ -242,7 +266,7 @@ export default function Timer({
           />
           <div className="flex flex-col text-left w-full">
             <span className="text-[10px] uppercase font-bold tracking-wider text-muted-foreground">Assigned Task</span>
-            <div className="flex items-center gap-2">
+            <div className="flex flex-wrap items-center gap-2">
               <select
                 value={selectedProjectId}
                 onChange={(e) => {
@@ -267,25 +291,57 @@ export default function Timer({
                 <select
                   value={selectedTaskId}
                   onChange={(e) => setSelectedTaskId(e.target.value)}
-                  className="bg-transparent text-sm font-medium focus:outline-none cursor-pointer border-b border-transparent hover:border-border transition-colors text-foreground"
+                  className="bg-transparent text-sm font-medium focus:outline-none cursor-pointer border-b border-transparent hover:border-border transition-colors text-foreground max-w-[200px] truncate"
                 >
                   <option value="" className="bg-card text-muted-foreground">Select Task (Optional)</option>
-                  {availableTasks.map((t) => (
-                    <option key={t.id} value={t.id} className="bg-card text-card-foreground">
-                      {t.name}
-                    </option>
-                  ))}
+                  {availableTasks.map((t) => {
+                    const priorityText = t.priority ? `[${t.priority.toUpperCase()}] ` : '';
+                    return (
+                      <option key={t.id} value={t.id} className="bg-card text-card-foreground">
+                        {priorityText}{t.name}
+                      </option>
+                    );
+                  })}
                 </select>
               )}
             </div>
           </div>
         </div>
 
+        {/* Selected Task Details & Controls */}
+        {selectedTask && (
+          <div className="flex items-center gap-2">
+            {/* Priority Badge */}
+            <span className={cn(
+              "px-2 py-0.5 rounded-lg border text-[10px] uppercase font-semibold",
+              PRIORITY_CONFIG[selectedTask.priority || 'medium']?.badgeClass
+            )}>
+              {selectedTask.priority || 'medium'}
+            </span>
+
+            {/* Status Selector Direct Control */}
+            <select
+              value={selectedTask.status || 'not_started'}
+              onChange={(e) => handleUpdateTaskStatusDirectly(e.target.value as TaskStatus)}
+              className={cn(
+                "px-2 py-0.5 rounded-lg border text-[10px] font-semibold focus:outline-none cursor-pointer",
+                STATUS_CONFIG[selectedTask.status || 'not_started']?.badgeClass
+              )}
+              title="Update Status"
+            >
+              <option value="not_started" className="bg-card text-foreground">Not Started</option>
+              <option value="next" className="bg-card text-foreground">Next</option>
+              <option value="in_progress" className="bg-card text-foreground">In Progress</option>
+              <option value="done" className="bg-card text-foreground">Done</option>
+            </select>
+          </div>
+        )}
+
         {/* Ambient Sound Toggle */}
         <button
           onClick={() => setIsAmbientPlaying(!isAmbientPlaying)}
           className={cn(
-            "flex items-center gap-2 text-xs font-medium px-3 py-1.5 rounded-xl border transition-all cursor-pointer",
+            "flex items-center gap-2 text-xs font-medium px-3 py-1.5 rounded-xl border transition-all cursor-pointer shrink-0",
             isAmbientPlaying
               ? "bg-indigo-500/20 border-indigo-500/50 text-indigo-400 shadow-sm"
               : "bg-muted border-border text-muted-foreground hover:text-foreground hover:bg-accent"

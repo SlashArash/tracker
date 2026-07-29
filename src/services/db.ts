@@ -60,6 +60,8 @@ export async function initDatabase(): Promise<void> {
       id: 'task_' + Date.now(),
       projectId: sampleProjectId,
       name: 'Focus Session Task',
+      status: 'next',
+      priority: 'high',
       completed: false,
       createdAt: new Date().toISOString()
     });

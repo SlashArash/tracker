@@ -107,7 +107,13 @@ export default function DataBackupModal({ isOpen, onClose, onRefresh }: DataBack
         await db.projects.bulkAdd(parsed.data.projects);
       }
       if (parsed.data.tasks?.length > 0) {
-        await db.tasks.bulkAdd(parsed.data.tasks);
+        const normalizedTasks = parsed.data.tasks.map((t: any) => ({
+          ...t,
+          status: t.status || (t.completed ? 'done' : 'not_started'),
+          priority: t.priority || 'medium',
+          completed: t.status ? t.status === 'done' : Boolean(t.completed)
+        }));
+        await db.tasks.bulkAdd(normalizedTasks);
       }
       if (parsed.data.sessions?.length > 0) {
         await db.sessions.bulkAdd(parsed.data.sessions);

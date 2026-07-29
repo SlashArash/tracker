@@ -5,10 +5,15 @@ export interface Project {
   createdAt: string;
 }
 
+export type TaskStatus = 'not_started' | 'next' | 'in_progress' | 'done';
+export type TaskPriority = 'low' | 'medium' | 'high' | 'urgent';
+
 export interface Task {
   id: string;
   projectId: string;
   name: string;
+  status: TaskStatus;
+  priority: TaskPriority;
   completed: boolean;
   createdAt: string;
 }
