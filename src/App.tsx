@@ -126,25 +126,77 @@ export default function App() {
 
       {/* Top Header Navbar */}
       <header className="sticky top-0 z-40 backdrop-blur-xl border-b border-border bg-background/80 transition-colors px-4 py-3 shadow-xs">
-        <div className="max-w-6xl mx-auto flex items-center justify-between">
+        <div className="max-w-6xl mx-auto flex items-center justify-between gap-4">
           {/* Logo & Title */}
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-rose-500 to-indigo-600 flex items-center justify-center shadow-lg shadow-rose-500/20">
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-rose-500 to-indigo-600 flex items-center justify-center shadow-lg shadow-rose-500/20 shrink-0">
               <TimerIcon className="w-5 h-5 text-white" />
             </div>
             <div>
               <div className="flex items-center gap-2">
                 <h1 className="text-lg font-extrabold tracking-tight font-heading text-foreground">Gojodoro</h1>
-                <span className="text-[10px] font-semibold bg-rose-500/10 text-rose-500 border border-rose-500/20 px-2 py-0.5 rounded-full">
+                <span className="hidden sm:inline-block text-[10px] font-semibold bg-rose-500/10 text-rose-500 border border-rose-500/20 px-2 py-0.5 rounded-full">
                   Offline-First
                 </span>
               </div>
-              <p className="text-[11px] text-muted-foreground">Pomodoro Project Time Tracker</p>
+              <p className="text-[11px] text-muted-foreground hidden sm:block">Pomodoro Project Time Tracker</p>
             </div>
           </div>
 
+          {/* Desktop Integrated Navigation Tabs */}
+          <nav className="hidden md:flex items-center gap-1 p-1 rounded-xl border border-border bg-card/60 backdrop-blur-md shadow-xs">
+            <button
+              onClick={() => setActiveTab('timer')}
+              className={cn(
+                "flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer",
+                activeTab === 'timer'
+                  ? "bg-rose-500 text-white shadow-md shadow-rose-500/25"
+                  : "text-muted-foreground hover:text-foreground hover:bg-accent"
+              )}
+            >
+              <TimerIcon className="w-3.5 h-3.5" />
+              <span>Timer</span>
+            </button>
+
+            <button
+              onClick={() => setActiveTab('projects')}
+              className={cn(
+                "flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer",
+                activeTab === 'projects'
+                  ? "bg-rose-500 text-white shadow-md shadow-rose-500/25"
+                  : "text-muted-foreground hover:text-foreground hover:bg-accent"
+              )}
+            >
+              <FolderGit2 className="w-3.5 h-3.5" />
+              <span>Projects & Tasks</span>
+              {projects.length > 0 && (
+                <span className={cn(
+                  "px-1.5 py-0.2 rounded-full text-[10px] font-bold",
+                  activeTab === 'projects'
+                    ? "bg-white/20 text-white"
+                    : "bg-muted text-muted-foreground"
+                )}>
+                  {projects.length}
+                </span>
+              )}
+            </button>
+
+            <button
+              onClick={() => setActiveTab('history')}
+              className={cn(
+                "flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer",
+                activeTab === 'history'
+                  ? "bg-rose-500 text-white shadow-md shadow-rose-500/25"
+                  : "text-muted-foreground hover:text-foreground hover:bg-accent"
+              )}
+            >
+              <History className="w-3.5 h-3.5" />
+              <span>History Log</span>
+            </button>
+          </nav>
+
           {/* Action Icons & Security */}
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 shrink-0">
             {/* Quick Theme Toggle Header Button */}
             <button
               onClick={handleToggleTheme}
@@ -186,56 +238,62 @@ export default function App() {
         </div>
       </header>
 
-      {/* Main App Container */}
-      <main className="flex-1 max-w-6xl w-full mx-auto p-4 md:p-6 pb-24">
-        {/* Navigation Tabs */}
-        <div className="flex items-center justify-center mb-8">
-          <div className="flex items-center gap-1 p-1.5 rounded-2xl border border-border bg-card shadow-xl transition-colors">
-            <button
-              onClick={() => setActiveTab('timer')}
-              className={cn(
-                "flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-semibold transition-all cursor-pointer",
-                activeTab === 'timer'
-                  ? "bg-rose-500 text-white shadow-lg shadow-rose-500/25"
-                  : "text-muted-foreground hover:text-foreground hover:bg-accent"
-              )}
-            >
-              <TimerIcon className="w-4 h-4" />
-              <span>Timer</span>
-            </button>
+      {/* Mobile Floating Bottom Glassmorphism Navigation Bar */}
+      <nav className="md:hidden fixed bottom-4 left-4 right-4 z-40 bg-background/85 backdrop-blur-xl border border-border/80 shadow-2xl rounded-2xl p-1.5 flex items-center justify-around">
+        <button
+          onClick={() => setActiveTab('timer')}
+          className={cn(
+            "flex-1 flex flex-col items-center justify-center gap-1 py-2 px-3 rounded-xl text-xs font-medium transition-all cursor-pointer",
+            activeTab === 'timer'
+              ? "bg-rose-500 text-white shadow-lg shadow-rose-500/25 font-semibold"
+              : "text-muted-foreground hover:text-foreground hover:bg-accent/50"
+          )}
+        >
+          <TimerIcon className="w-4 h-4" />
+          <span className="text-[11px]">Timer</span>
+        </button>
 
-            <button
-              onClick={() => setActiveTab('projects')}
-              className={cn(
-                "flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-semibold transition-all cursor-pointer",
+        <button
+          onClick={() => setActiveTab('projects')}
+          className={cn(
+            "flex-1 flex flex-col items-center justify-center gap-1 py-2 px-3 rounded-xl text-xs font-medium transition-all cursor-pointer relative",
+            activeTab === 'projects'
+              ? "bg-rose-500 text-white shadow-lg shadow-rose-500/25 font-semibold"
+              : "text-muted-foreground hover:text-foreground hover:bg-accent/50"
+          )}
+        >
+          <div className="relative flex items-center">
+            <FolderGit2 className="w-4 h-4" />
+            {projects.length > 0 && (
+              <span className={cn(
+                "absolute -top-1 -right-2 px-1 py-0.2 rounded-full text-[9px] font-bold leading-none",
                 activeTab === 'projects'
-                  ? "bg-rose-500 text-white shadow-lg shadow-rose-500/25"
-                  : "text-muted-foreground hover:text-foreground hover:bg-accent"
-              )}
-            >
-              <FolderGit2 className="w-4 h-4" />
-              <span>Projects & Tasks</span>
-              {projects.length > 0 && (
-                <span className="ml-1 px-1.5 py-0.5 rounded-full text-[10px] bg-muted text-muted-foreground">
-                  {projects.length}
-                </span>
-              )}
-            </button>
-
-            <button
-              onClick={() => setActiveTab('history')}
-              className={cn(
-                "flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-semibold transition-all cursor-pointer",
-                activeTab === 'history'
-                  ? "bg-rose-500 text-white shadow-lg shadow-rose-500/25"
-                  : "text-muted-foreground hover:text-foreground hover:bg-accent"
-              )}
-            >
-              <History className="w-4 h-4" />
-              <span>History Log</span>
-            </button>
+                  ? "bg-white text-rose-600"
+                  : "bg-rose-500 text-white"
+              )}>
+                {projects.length}
+              </span>
+            )}
           </div>
-        </div>
+          <span className="text-[11px]">Projects</span>
+        </button>
+
+        <button
+          onClick={() => setActiveTab('history')}
+          className={cn(
+            "flex-1 flex flex-col items-center justify-center gap-1 py-2 px-3 rounded-xl text-xs font-medium transition-all cursor-pointer",
+            activeTab === 'history'
+              ? "bg-rose-500 text-white shadow-lg shadow-rose-500/25 font-semibold"
+              : "text-muted-foreground hover:text-foreground hover:bg-accent/50"
+          )}
+        >
+          <History className="w-4 h-4" />
+          <span className="text-[11px]">History</span>
+        </button>
+      </nav>
+
+      {/* Main App Container */}
+      <main className="flex-1 max-w-6xl w-full mx-auto p-4 md:p-6 pb-28 md:pb-12">
 
         {/* Tab Content Views */}
         {activeTab === 'timer' && (
