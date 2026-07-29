@@ -37,8 +37,8 @@ export default function SessionHistory({ sessions = [], projects = [], onRefresh
     <div className="w-full max-w-4xl mx-auto py-4 space-y-6">
       {/* Header & Stats Bar */}
       <div>
-        <h2 className="text-xl font-bold text-white tracking-tight">Time Tracking History</h2>
-        <p className="text-xs text-slate-400">Log of all your focused pomodoros and stopwatch sessions</p>
+        <h2 className="text-xl font-bold text-slate-100 light:text-slate-900 tracking-tight">Time Tracking History</h2>
+        <p className="text-xs text-slate-400 light:text-slate-500">Log of all your focused pomodoros and stopwatch sessions</p>
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
@@ -47,8 +47,8 @@ export default function SessionHistory({ sessions = [], projects = [], onRefresh
             <Clock className="w-6 h-6" />
           </div>
           <div>
-            <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider block">Today's Focus</span>
-            <span className="text-xl font-bold text-white font-mono">{formatDuration(todaySeconds)}</span>
+            <span className="text-[11px] font-semibold text-slate-400 light:text-slate-500 uppercase tracking-wider block">Today's Focus</span>
+            <span className="text-xl font-bold text-slate-100 light:text-slate-900 font-mono">{formatDuration(todaySeconds)}</span>
           </div>
         </div>
 
@@ -57,8 +57,8 @@ export default function SessionHistory({ sessions = [], projects = [], onRefresh
             <Layers className="w-6 h-6" />
           </div>
           <div>
-            <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider block">Total Logged Time</span>
-            <span className="text-xl font-bold text-white font-mono">{formatDuration(totalSeconds)}</span>
+            <span className="text-[11px] font-semibold text-slate-400 light:text-slate-500 uppercase tracking-wider block">Total Logged Time</span>
+            <span className="text-xl font-bold text-slate-100 light:text-slate-900 font-mono">{formatDuration(totalSeconds)}</span>
           </div>
         </div>
 
@@ -67,21 +67,21 @@ export default function SessionHistory({ sessions = [], projects = [], onRefresh
             <CheckCircle className="w-6 h-6" />
           </div>
           <div>
-            <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider block">Total Sessions</span>
-            <span className="text-xl font-bold text-white font-mono">{totalSessionsCount}</span>
+            <span className="text-[11px] font-semibold text-slate-400 light:text-slate-500 uppercase tracking-wider block">Total Sessions</span>
+            <span className="text-xl font-bold text-slate-100 light:text-slate-900 font-mono">{totalSessionsCount}</span>
           </div>
         </div>
       </div>
 
       {/* History Timeline */}
-      <div className="glass-panel rounded-2xl p-5 border border-slate-800 space-y-3">
-        <h3 className="text-sm font-semibold text-white flex items-center gap-2 mb-4">
-          <History className="w-4 h-4 text-slate-400" />
+      <div className="glass-panel rounded-2xl p-5 border border-slate-800 light:border-slate-200 space-y-3">
+        <h3 className="text-sm font-semibold text-slate-100 light:text-slate-900 flex items-center gap-2 mb-4">
+          <History className="w-4 h-4 text-slate-400 light:text-slate-500" />
           <span>Session Log</span>
         </h3>
 
         {sessions.length === 0 ? (
-          <div className="text-center py-8 text-slate-500 text-sm">
+          <div className="text-center py-8 text-slate-500 light:text-slate-400 text-sm">
             No completed sessions recorded yet. Start a timer to log your time!
           </div>
         ) : (
@@ -99,7 +99,7 @@ export default function SessionHistory({ sessions = [], projects = [], onRefresh
                 return (
                   <div
                     key={sess.id}
-                    className="flex items-center justify-between p-3.5 rounded-xl bg-slate-900/60 border border-slate-800/80 hover:bg-slate-900 transition-all group"
+                    className="flex items-center justify-between p-3.5 rounded-xl bg-slate-900/60 light:bg-slate-50 border border-slate-800/80 light:border-slate-200 hover:bg-slate-900 light:hover:bg-slate-100 transition-all group"
                   >
                     <div className="flex items-center gap-3">
                       <div
@@ -108,21 +108,21 @@ export default function SessionHistory({ sessions = [], projects = [], onRefresh
                       />
                       <div>
                         <div className="flex items-center gap-2">
-                          <span className="text-sm font-semibold text-white">
+                          <span className="text-sm font-semibold text-slate-100 light:text-slate-900">
                             {sess.categoryName || 'Uncategorized'}
                           </span>
                           {sess.taskName && (
-                            <span className="text-xs text-slate-400 font-normal">
+                            <span className="text-xs text-slate-400 light:text-slate-500 font-normal">
                               • {sess.taskName}
                             </span>
                           )}
                         </div>
-                        <div className="flex items-center gap-3 text-[11px] text-slate-500 mt-0.5">
+                        <div className="flex items-center gap-3 text-[11px] text-slate-500 light:text-slate-500 mt-0.5">
                           <span className="flex items-center gap-1">
                             <Calendar className="w-3 h-3" />
                             {dateFormatted} at {timeFormatted}
                           </span>
-                          <span className="capitalize text-slate-400 font-medium">
+                          <span className="capitalize text-slate-400 light:text-slate-600 font-medium">
                             {sess.mode === 'stopwatch' ? 'Stopwatch' : 'Pomodoro'}
                           </span>
                         </div>
@@ -130,13 +130,13 @@ export default function SessionHistory({ sessions = [], projects = [], onRefresh
                     </div>
 
                     <div className="flex items-center gap-4">
-                      <span className="text-sm font-bold font-mono text-emerald-400 bg-emerald-500/10 px-3 py-1 rounded-lg border border-emerald-500/20">
+                      <span className="text-sm font-bold font-mono text-emerald-400 light:text-emerald-600 bg-emerald-500/10 light:bg-emerald-50 px-3 py-1 rounded-lg border border-emerald-500/20 light:border-emerald-200">
                         {formatDuration(sess.durationSeconds)}
                       </span>
 
                       <button
                         onClick={() => handleDeleteSession(sess.id)}
-                        className="p-1.5 rounded-lg text-slate-600 hover:text-rose-400 hover:bg-rose-500/10 transition-colors opacity-0 group-hover:opacity-100 cursor-pointer"
+                        className="p-1.5 rounded-lg text-slate-600 light:text-slate-400 hover:text-rose-400 hover:bg-rose-500/10 transition-colors opacity-0 group-hover:opacity-100 cursor-pointer"
                         title="Delete entry"
                       >
                         <Trash2 className="w-4 h-4" />

@@ -23,7 +23,7 @@ export default function DataBackupModal({ isOpen, onClose, onRefresh }) {
       const settings = await getSettings();
 
       const backupPayload = {
-        app: 'PomoTrack',
+        app: 'Gojodoro',
         exportedAt: new Date().toISOString(),
         version: 1,
         data: {
@@ -35,7 +35,7 @@ export default function DataBackupModal({ isOpen, onClose, onRefresh }) {
       };
 
       let finalContentString = JSON.stringify(backupPayload, null, 2);
-      let filename = `pomotrack-backup-${new Date().toISOString().split('T')[0]}.json`;
+      let filename = `Gojodoro-backup-${new Date().toISOString().split('T')[0]}.json`;
 
       if (useEncryption) {
         if (!exportPasscode) {
@@ -44,7 +44,7 @@ export default function DataBackupModal({ isOpen, onClose, onRefresh }) {
           return;
         }
         finalContentString = await encryptData(finalContentString, exportPasscode);
-        filename = `pomotrack-encrypted-backup-${new Date().toISOString().split('T')[0]}.json`;
+        filename = `Gojodoro-encrypted-backup-${new Date().toISOString().split('T')[0]}.json`;
       }
 
       const blob = new Blob([finalContentString], { type: 'application/json' });
@@ -90,7 +90,7 @@ export default function DataBackupModal({ isOpen, onClose, onRefresh }) {
       }
 
       if (!parsed.data || !Array.isArray(parsed.data.projects) || !Array.isArray(parsed.data.sessions)) {
-        throw new Error('Invalid PomoTrack backup file structure.');
+        throw new Error('Invalid Gojodoro backup file structure.');
       }
 
       // Restore data to IndexedDB
@@ -124,16 +124,16 @@ export default function DataBackupModal({ isOpen, onClose, onRefresh }) {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 backdrop-blur-md p-4">
-      <div className="w-full max-w-lg glass-card rounded-2xl p-6 border border-slate-700 shadow-2xl relative">
-        <div className="flex items-center justify-between pb-4 border-b border-slate-800">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 light:bg-slate-900/40 backdrop-blur-md p-4">
+      <div className="w-full max-w-lg glass-card rounded-2xl p-6 border border-slate-700 light:border-slate-300 shadow-2xl relative">
+        <div className="flex items-center justify-between pb-4 border-b border-slate-800 light:border-slate-200">
           <div className="flex items-center gap-2.5">
             <FileJson className="w-5 h-5 text-indigo-400" />
-            <h3 className="text-lg font-bold text-white">Import & Export Data</h3>
+            <h3 className="text-lg font-bold text-slate-100 light:text-slate-900">Import & Export Data</h3>
           </div>
           <button
             onClick={onClose}
-            className="p-1 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
+            className="p-1 rounded-lg text-slate-400 light:text-slate-500 hover:text-white light:hover:text-slate-900 hover:bg-slate-800 light:hover:bg-slate-200 transition-colors"
           >
             <X className="w-5 h-5" />
           </button>
@@ -141,11 +141,10 @@ export default function DataBackupModal({ isOpen, onClose, onRefresh }) {
 
         {message.text && (
           <div
-            className={`mt-4 p-3 rounded-xl border text-xs flex items-center gap-2 ${
-              message.type === 'success'
-                ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-300'
-                : 'bg-rose-500/10 border-rose-500/30 text-rose-300'
-            }`}
+            className={`mt-4 p-3 rounded-xl border text-xs flex items-center gap-2 ${message.type === 'success'
+              ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-300 light:text-emerald-700'
+              : 'bg-rose-500/10 border-rose-500/30 text-rose-300 light:text-rose-700'
+              }`}
           >
             {message.type === 'success' ? <CheckCircle2 className="w-4 h-4 shrink-0" /> : <AlertCircle className="w-4 h-4 shrink-0" />}
             <span>{message.text}</span>
@@ -154,12 +153,12 @@ export default function DataBackupModal({ isOpen, onClose, onRefresh }) {
 
         <div className="py-5 space-y-6">
           {/* Export Section */}
-          <div className="bg-slate-900/60 rounded-xl p-4 border border-slate-800/80 space-y-3">
-            <h4 className="text-sm font-semibold text-white flex items-center gap-2">
+          <div className="bg-slate-900/60 light:bg-slate-50 rounded-xl p-4 border border-slate-800/80 light:border-slate-200 space-y-3">
+            <h4 className="text-sm font-semibold text-slate-100 light:text-slate-900 flex items-center gap-2">
               <Download className="w-4 h-4 text-rose-400" />
               <span>Export JSON Backup</span>
             </h4>
-            <p className="text-xs text-slate-400">
+            <p className="text-xs text-slate-400 light:text-slate-500">
               Download your projects, tasks, and session logs to a JSON file.
             </p>
 
@@ -169,9 +168,9 @@ export default function DataBackupModal({ isOpen, onClose, onRefresh }) {
                 id="encryptExport"
                 checked={useEncryption}
                 onChange={(e) => setUseEncryption(e.target.checked)}
-                className="rounded border-slate-700 text-rose-500 focus:ring-rose-500 bg-slate-900 cursor-pointer"
+                className="rounded border-slate-700 light:border-slate-300 text-rose-500 focus:ring-rose-500 bg-slate-900 light:bg-slate-100 cursor-pointer"
               />
-              <label htmlFor="encryptExport" className="text-xs text-slate-300 cursor-pointer flex items-center gap-1.5">
+              <label htmlFor="encryptExport" className="text-xs text-slate-300 light:text-slate-700 cursor-pointer flex items-center gap-1.5">
                 <ShieldCheck className="w-3.5 h-3.5 text-indigo-400" />
                 Encrypt backup with passcode
               </label>
@@ -183,14 +182,14 @@ export default function DataBackupModal({ isOpen, onClose, onRefresh }) {
                 value={exportPasscode}
                 onChange={(e) => setExportPasscode(e.target.value)}
                 placeholder="Enter passcode for file encryption"
-                className="w-full bg-slate-950 border border-slate-700 text-white rounded-xl px-3 py-2 text-xs focus:outline-none focus:border-rose-500"
+                className="w-full bg-slate-950 light:bg-white border border-slate-700 light:border-slate-300 text-slate-100 light:text-slate-900 rounded-xl px-3 py-2 text-xs focus:outline-none focus:border-rose-500"
               />
             )}
 
             <button
               onClick={handleExport}
               disabled={loading}
-              className="w-full bg-slate-800 hover:bg-slate-700 text-white font-medium py-2.5 rounded-xl text-xs flex items-center justify-center gap-2 transition-colors cursor-pointer border border-slate-700"
+              className="w-full bg-slate-800 light:bg-slate-200 hover:bg-slate-700 light:hover:bg-slate-300 text-white light:text-slate-800 font-medium py-2.5 rounded-xl text-xs flex items-center justify-center gap-2 transition-colors cursor-pointer border border-slate-700 light:border-slate-300"
             >
               <Download className="w-4 h-4" />
               <span>{loading ? 'Exporting...' : 'Download Backup File'}</span>
@@ -198,12 +197,12 @@ export default function DataBackupModal({ isOpen, onClose, onRefresh }) {
           </div>
 
           {/* Import Section */}
-          <form onSubmit={handleImport} className="bg-slate-900/60 rounded-xl p-4 border border-slate-800/80 space-y-3">
-            <h4 className="text-sm font-semibold text-white flex items-center gap-2">
+          <form onSubmit={handleImport} className="bg-slate-900/60 light:bg-slate-50 rounded-xl p-4 border border-slate-800/80 light:border-slate-200 space-y-3">
+            <h4 className="text-sm font-semibold text-slate-100 light:text-slate-900 flex items-center gap-2">
               <Upload className="w-4 h-4 text-emerald-400" />
               <span>Import JSON Backup</span>
             </h4>
-            <p className="text-xs text-slate-400">
+            <p className="text-xs text-slate-400 light:text-slate-500">
               Restore your workspace from a previously exported `.json` file.
             </p>
 
@@ -211,7 +210,7 @@ export default function DataBackupModal({ isOpen, onClose, onRefresh }) {
               type="file"
               accept=".json"
               onChange={(e) => setImportFile(e.target.files[0] || null)}
-              className="w-full text-xs text-slate-400 file:mr-3 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-slate-800 file:text-white hover:file:bg-slate-700 cursor-pointer"
+              className="w-full text-xs text-slate-400 light:text-slate-600 file:mr-3 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-slate-800 light:file:bg-slate-200 file:text-white light:file:text-slate-800 hover:file:bg-slate-700 light:hover:file:bg-slate-300 cursor-pointer"
             />
 
             <input
@@ -219,7 +218,7 @@ export default function DataBackupModal({ isOpen, onClose, onRefresh }) {
               value={importPasscode}
               onChange={(e) => setImportPasscode(e.target.value)}
               placeholder="Decryption passcode (if file is encrypted)"
-              className="w-full bg-slate-950 border border-slate-700 text-white rounded-xl px-3 py-2 text-xs focus:outline-none focus:border-emerald-500"
+              className="w-full bg-slate-950 light:bg-white border border-slate-700 light:border-slate-300 text-slate-100 light:text-slate-900 rounded-xl px-3 py-2 text-xs focus:outline-none focus:border-emerald-500"
             />
 
             <button

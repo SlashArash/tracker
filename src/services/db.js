@@ -1,6 +1,6 @@
 import Dexie from 'dexie';
 
-export const db = new Dexie('PomoTrackDB');
+export const db = new Dexie('GojodoroDB');
 
 db.version(1).stores({
   projects: 'id, name, color, createdAt',
@@ -22,7 +22,8 @@ export const DEFAULT_SETTINGS = {
   ambientSound: 'none', // none, white, pink, rain
   isPasscodeEnabled: false,
   passcodeHash: null,
-  passcodeSalt: null
+  passcodeSalt: null,
+  theme: 'dark' // dark | light
 };
 
 // Seed default settings if empty

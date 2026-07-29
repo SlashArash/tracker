@@ -58,8 +58,8 @@ export default function LockScreen({ isSetupMode, storedHash, storedSalt, onUnlo
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/90 backdrop-blur-xl p-4">
-      <div className="w-full max-w-md glass-card rounded-2xl p-8 border border-slate-700/50 shadow-2xl relative overflow-hidden">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/90 light:bg-slate-900/50 backdrop-blur-xl p-4">
+      <div className="w-full max-w-md glass-card rounded-2xl p-8 border border-slate-700/50 light:border-slate-300 shadow-2xl relative overflow-hidden">
         {/* Glow backdrop accent */}
         <div className="absolute -top-24 -left-24 w-48 h-48 bg-rose-500/20 rounded-full blur-3xl pointer-events-none" />
         <div className="absolute -bottom-24 -right-24 w-48 h-48 bg-indigo-500/20 rounded-full blur-3xl pointer-events-none" />
@@ -68,10 +68,10 @@ export default function LockScreen({ isSetupMode, storedHash, storedSalt, onUnlo
           <div className="w-14 h-14 rounded-2xl bg-gradient-to-tr from-rose-500 to-indigo-600 flex items-center justify-center shadow-lg shadow-rose-500/20 mb-4">
             {isSetupMode ? <ShieldCheck className="w-7 h-7 text-white" /> : <Lock className="w-7 h-7 text-white" />}
           </div>
-          <h2 className="text-2xl font-bold text-white tracking-tight">
+          <h2 className="text-2xl font-bold text-slate-100 light:text-slate-900 tracking-tight">
             {isSetupMode ? 'Set Up Passcode Lock' : 'Application Locked'}
           </h2>
-          <p className="text-sm text-slate-400 mt-1">
+          <p className="text-sm text-slate-400 light:text-slate-500 mt-1">
             {isSetupMode
               ? 'Protect your local project sessions with a master key.'
               : 'Enter your master passcode to access your workspace.'}
@@ -79,7 +79,7 @@ export default function LockScreen({ isSetupMode, storedHash, storedSalt, onUnlo
         </div>
 
         {error && (
-          <div className="mb-5 p-3 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-300 text-xs flex items-center gap-2">
+          <div className="mb-5 p-3 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-300 light:text-rose-700 text-xs flex items-center gap-2">
             <AlertCircle className="w-4 h-4 shrink-0" />
             <span>{error}</span>
           </div>
@@ -88,31 +88,31 @@ export default function LockScreen({ isSetupMode, storedHash, storedSalt, onUnlo
         {isSetupMode ? (
           <form onSubmit={handleCreatePasscode} className="space-y-4">
             <div>
-              <label className="block text-xs font-medium text-slate-300 mb-1">New Passcode / PIN</label>
+              <label className="block text-xs font-medium text-slate-300 light:text-slate-700 mb-1">New Passcode / PIN</label>
               <div className="relative">
                 <input
                   type="password"
                   value={passcode}
                   onChange={(e) => setPasscode(e.target.value)}
                   placeholder="Enter passcode (min 4 chars)"
-                  className="w-full bg-slate-900/80 border border-slate-700 focus:border-rose-500 text-white rounded-xl px-4 py-3 text-sm focus:outline-none transition-all"
+                  className="w-full bg-slate-900/80 light:bg-slate-50 border border-slate-700 light:border-slate-300 focus:border-rose-500 text-slate-100 light:text-slate-900 rounded-xl px-4 py-3 text-sm focus:outline-none transition-all"
                   autoFocus
                 />
-                <KeyRound className="absolute right-3.5 top-3.5 w-4 h-4 text-slate-500" />
+                <KeyRound className="absolute right-3.5 top-3.5 w-4 h-4 text-slate-500 light:text-slate-400" />
               </div>
             </div>
 
             <div>
-              <label className="block text-xs font-medium text-slate-300 mb-1">Confirm Passcode</label>
+              <label className="block text-xs font-medium text-slate-300 light:text-slate-700 mb-1">Confirm Passcode</label>
               <div className="relative">
                 <input
                   type="password"
                   value={confirmPasscode}
                   onChange={(e) => setConfirmPasscode(e.target.value)}
                   placeholder="Re-enter passcode"
-                  className="w-full bg-slate-900/80 border border-slate-700 focus:border-rose-500 text-white rounded-xl px-4 py-3 text-sm focus:outline-none transition-all"
+                  className="w-full bg-slate-900/80 light:bg-slate-50 border border-slate-700 light:border-slate-300 focus:border-rose-500 text-slate-100 light:text-slate-900 rounded-xl px-4 py-3 text-sm focus:outline-none transition-all"
                 />
-                <KeyRound className="absolute right-3.5 top-3.5 w-4 h-4 text-slate-500" />
+                <KeyRound className="absolute right-3.5 top-3.5 w-4 h-4 text-slate-500 light:text-slate-400" />
               </div>
             </div>
 
@@ -128,14 +128,14 @@ export default function LockScreen({ isSetupMode, storedHash, storedSalt, onUnlo
         ) : (
           <form onSubmit={handleUnlock} className="space-y-4">
             <div>
-              <label className="block text-xs font-medium text-slate-300 mb-1">Passcode</label>
+              <label className="block text-xs font-medium text-slate-300 light:text-slate-700 mb-1">Passcode</label>
               <div className="relative">
                 <input
                   type="password"
                   value={passcode}
                   onChange={(e) => setPasscode(e.target.value)}
                   placeholder="••••••••"
-                  className="w-full bg-slate-900/80 border border-slate-700 focus:border-rose-500 text-white rounded-xl px-4 py-3 text-sm focus:outline-none transition-all text-center tracking-widest text-lg"
+                  className="w-full bg-slate-900/80 light:bg-slate-50 border border-slate-700 light:border-slate-300 focus:border-rose-500 text-slate-100 light:text-slate-900 rounded-xl px-4 py-3 text-sm focus:outline-none transition-all text-center tracking-widest text-lg"
                   autoFocus
                 />
               </div>
