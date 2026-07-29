@@ -313,7 +313,7 @@ export default function App() {
       <main className="flex-1 max-w-6xl w-full mx-auto p-4 md:p-6 pb-28 md:pb-12">
 
         {/* Tab Content Views */}
-        {activeTab === 'timer' && (
+        <div className={activeTab === 'timer' ? 'block' : 'hidden'}>
           <Timer
             settings={settings}
             projects={projects}
@@ -322,9 +322,9 @@ export default function App() {
             initialTaskId={activeFocusTaskId}
             onSessionLogged={loadAppData}
           />
-        )}
+        </div>
 
-        {activeTab === 'projects' && (
+        <div className={activeTab === 'projects' ? 'block' : 'hidden'}>
           <ProjectManager
             projects={projects}
             tasks={tasks}
@@ -332,15 +332,15 @@ export default function App() {
             onRefresh={loadAppData}
             onStartTaskFocus={handleStartTaskFocus}
           />
-        )}
+        </div>
 
-        {activeTab === 'history' && (
+        <div className={activeTab === 'history' ? 'block' : 'hidden'}>
           <SessionHistory
             sessions={sessions}
             projects={projects}
             onRefresh={loadAppData}
           />
-        )}
+        </div>
       </main>
 
       {/* Footer */}

@@ -46,6 +46,7 @@ export default function Timer({
   }, [initialTaskId]);
 
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const lastTickRef = useRef<number>(Date.now());
 
   const availableTasks = tasks
     .filter(t => t.projectId === selectedProjectId && t.status !== 'done' && !t.completed)
@@ -78,22 +79,46 @@ export default function Timer({
     return () => stopAmbientSound();
   }, [isRunning, isAmbientPlaying, settings.ambientSound, settings.soundVolume]);
 
-  // Main countdown / countup timer loop
+  // Main countdown / countup timer loop with timestamp tracking
   useEffect(() => {
     if (isRunning) {
-      timerRef.current = setInterval(() => {
+      lastTickRef.current = Date.now();
+
+      const updateTimer = () => {
+        const now = Date.now();
+        const elapsedSecs = Math.floor((now - lastTickRef.current) / 1000);
+        if (elapsedSecs <= 0) return;
+
+        lastTickRef.current += elapsedSecs * 1000;
+
         if (mode === 'stopwatch') {
-          setTimeLeft(prev => prev + 1);
+          setTimeLeft(prev => prev + elapsedSecs);
         } else {
           setTimeLeft(prev => {
-            if (prev <= 1) {
+            const next = prev - elapsedSecs;
+            if (next <= 0) {
               handleTimerComplete();
               return 0;
             }
-            return prev - 1;
+            return next;
           });
         }
-      }, 1000);
+      };
+
+      timerRef.current = setInterval(updateTimer, 1000);
+
+      const handleVisibilityChange = () => {
+        if (document.visibilityState === 'visible' && isRunning) {
+          updateTimer();
+        }
+      };
+
+      document.addEventListener('visibilitychange', handleVisibilityChange);
+
+      return () => {
+        if (timerRef.current) clearInterval(timerRef.current);
+        document.removeEventListener('visibilitychange', handleVisibilityChange);
+      };
     } else {
       if (timerRef.current) clearInterval(timerRef.current);
     }
