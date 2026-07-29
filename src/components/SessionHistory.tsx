@@ -1,160 +1,204 @@
-import React from 'react';
-import { History, Clock, Trash2, Calendar, CheckCircle, Layers } from 'lucide-react';
-import { db } from '../services/db';
-import { Session, Project } from '../types';
+import {
+	Calendar,
+	CheckCircle,
+	Clock,
+	History,
+	Layers,
+	Trash2,
+} from "lucide-react";
+import { db } from "../services/db";
+import type { Project, Session } from "../types";
 
 export interface SessionHistoryProps {
-  sessions?: Session[];
-  projects?: Project[];
-  onRefresh: () => void;
+	sessions?: Session[];
+	projects?: Project[];
+	onRefresh: () => void;
 }
 
-export default function SessionHistory({ sessions = [], projects = [], onRefresh }: SessionHistoryProps) {
-  const handleDeleteSession = async (sessionId: string) => {
-    if (!window.confirm('Delete this session log entry?')) return;
-    await db.sessions.delete(sessionId);
-    onRefresh();
-  };
+export default function SessionHistory({
+	sessions = [],
+	projects = [],
+	onRefresh,
+}: SessionHistoryProps) {
+	const handleDeleteSession = async (sessionId: string) => {
+		if (!window.confirm("Delete this session log entry?")) return;
+		await db.sessions.delete(sessionId);
+		onRefresh();
+	};
 
-  // Helper formatting seconds to "Xm Ys" or "Xh Ym"
-  const formatDuration = (seconds: number): string => {
-    if (!seconds) return '0m';
-    const hrs = Math.floor(seconds / 3600);
-    const mins = Math.floor((seconds % 3600) / 60);
-    const secs = seconds % 60;
-    if (hrs > 0) {
-      return `${hrs}h ${mins}m`;
-    }
-    if (mins > 0) {
-      return `${mins}m ${secs > 0 ? secs + 's' : ''}`;
-    }
-    return `${secs}s`;
-  };
+	// Helper formatting seconds to "Xm Ys" or "Xh Ym"
+	const formatDuration = (seconds: number): string => {
+		if (!seconds) return "0m";
+		const hrs = Math.floor(seconds / 3600);
+		const mins = Math.floor((seconds % 3600) / 60);
+		const secs = seconds % 60;
+		if (hrs > 0) {
+			return `${hrs}h ${mins}m`;
+		}
+		if (mins > 0) {
+			return `${mins}m ${secs > 0 ? `${secs}s` : ""}`;
+		}
+		return `${secs}s`;
+	};
 
-  // Calculate totals
-  const totalSeconds = sessions.reduce((acc, curr) => acc + (curr.durationSeconds || 0), 0);
-  const totalSessionsCount = sessions.length;
+	// Calculate totals
+	const totalSeconds = sessions.reduce(
+		(acc, curr) => acc + (curr.durationSeconds || 0),
+		0,
+	);
+	const totalSessionsCount = sessions.length;
 
-  // Filter today's sessions
-  const todayStr = new Date().toISOString().split('T')[0];
-  const todaySessions = sessions.filter(s => s.completedAt && s.completedAt.startsWith(todayStr));
-  const todaySeconds = todaySessions.reduce((acc, curr) => acc + (curr.durationSeconds || 0), 0);
+	// Filter today's sessions
+	const todayStr = new Date().toISOString().split("T")[0];
+	const todaySessions = sessions.filter((s) =>
+		s.completedAt?.startsWith(todayStr),
+	);
+	const todaySeconds = todaySessions.reduce(
+		(acc, curr) => acc + (curr.durationSeconds || 0),
+		0,
+	);
 
-  return (
-    <div className="w-full max-w-4xl mx-auto py-4 space-y-6">
-      {/* Header & Stats Bar */}
-      <div>
-        <h2 className="text-xl font-bold text-foreground tracking-tight">Time Tracking History</h2>
-        <p className="text-xs text-muted-foreground">Log of all your focused pomodoros and stopwatch sessions</p>
-      </div>
+	return (
+		<div className="w-full max-w-4xl mx-auto py-4 space-y-6">
+			{/* Header & Stats Bar */}
+			<div>
+				<h2 className="text-xl font-bold text-foreground tracking-tight">
+					Time Tracking History
+				</h2>
+				<p className="text-xs text-muted-foreground">
+					Log of all your focused pomodoros and stopwatch sessions
+				</p>
+			</div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <div className="glass-card rounded-2xl p-4 flex items-center gap-4 text-foreground border border-border">
-          <div className="w-12 h-12 rounded-xl bg-rose-500/10 border border-rose-500/20 flex items-center justify-center text-rose-400">
-            <Clock className="w-6 h-6" />
-          </div>
-          <div>
-            <span className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider block">Today's Focus</span>
-            <span className="text-xl font-bold text-foreground font-mono">{formatDuration(todaySeconds)}</span>
-          </div>
-        </div>
+			<div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+				<div className="glass-card rounded-2xl p-4 flex items-center gap-4 text-foreground border border-border">
+					<div className="w-12 h-12 rounded-xl bg-rose-500/10 border border-rose-500/20 flex items-center justify-center text-rose-400">
+						<Clock className="w-6 h-6" />
+					</div>
+					<div>
+						<span className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider block">
+							Today's Focus
+						</span>
+						<span className="text-xl font-bold text-foreground font-mono">
+							{formatDuration(todaySeconds)}
+						</span>
+					</div>
+				</div>
 
-        <div className="glass-card rounded-2xl p-4 flex items-center gap-4 text-foreground border border-border">
-          <div className="w-12 h-12 rounded-xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center text-indigo-400">
-            <Layers className="w-6 h-6" />
-          </div>
-          <div>
-            <span className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider block">Total Logged Time</span>
-            <span className="text-xl font-bold text-foreground font-mono">{formatDuration(totalSeconds)}</span>
-          </div>
-        </div>
+				<div className="glass-card rounded-2xl p-4 flex items-center gap-4 text-foreground border border-border">
+					<div className="w-12 h-12 rounded-xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center text-indigo-400">
+						<Layers className="w-6 h-6" />
+					</div>
+					<div>
+						<span className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider block">
+							Total Logged Time
+						</span>
+						<span className="text-xl font-bold text-foreground font-mono">
+							{formatDuration(totalSeconds)}
+						</span>
+					</div>
+				</div>
 
-        <div className="glass-card rounded-2xl p-4 flex items-center gap-4 text-foreground border border-border">
-          <div className="w-12 h-12 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400">
-            <CheckCircle className="w-6 h-6" />
-          </div>
-          <div>
-            <span className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider block">Total Sessions</span>
-            <span className="text-xl font-bold text-foreground font-mono">{totalSessionsCount}</span>
-          </div>
-        </div>
-      </div>
+				<div className="glass-card rounded-2xl p-4 flex items-center gap-4 text-foreground border border-border">
+					<div className="w-12 h-12 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400">
+						<CheckCircle className="w-6 h-6" />
+					</div>
+					<div>
+						<span className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider block">
+							Total Sessions
+						</span>
+						<span className="text-xl font-bold text-foreground font-mono">
+							{totalSessionsCount}
+						</span>
+					</div>
+				</div>
+			</div>
 
-      {/* History Timeline */}
-      <div className="glass-panel rounded-2xl p-5 border border-border space-y-3">
-        <h3 className="text-sm font-semibold text-foreground flex items-center gap-2 mb-4">
-          <History className="w-4 h-4 text-muted-foreground" />
-          <span>Session Log</span>
-        </h3>
+			{/* History Timeline */}
+			<div className="glass-panel rounded-2xl p-5 border border-border space-y-3">
+				<h3 className="text-sm font-semibold text-foreground flex items-center gap-2 mb-4">
+					<History className="w-4 h-4 text-muted-foreground" />
+					<span>Session Log</span>
+				</h3>
 
-        {sessions.length === 0 ? (
-          <div className="text-center py-8 text-muted-foreground text-sm">
-            No completed sessions recorded yet. Start a timer to log your time!
-          </div>
-        ) : (
-          <div className="space-y-2.5">
-            {sessions
-              .slice()
-              .reverse()
-              .map((sess) => {
-                const proj = projects.find(p => p.id === sess.projectId);
-                const categoryColor = proj ? proj.color : 'hsl(var(--muted-foreground))';
-                const dateObj = new Date(sess.completedAt);
-                const timeFormatted = dateObj.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-                const dateFormatted = dateObj.toLocaleDateString([], { month: 'short', day: 'numeric' });
+				{sessions.length === 0 ? (
+					<div className="text-center py-8 text-muted-foreground text-sm">
+						No completed sessions recorded yet. Start a timer to log your time!
+					</div>
+				) : (
+					<div className="space-y-2.5">
+						{sessions
+							.slice()
+							.reverse()
+							.map((sess) => {
+								const proj = projects.find((p) => p.id === sess.projectId);
+								const categoryColor = proj
+									? proj.color
+									: "hsl(var(--muted-foreground))";
+								const dateObj = new Date(sess.completedAt);
+								const timeFormatted = dateObj.toLocaleTimeString([], {
+									hour: "2-digit",
+									minute: "2-digit",
+								});
+								const dateFormatted = dateObj.toLocaleDateString([], {
+									month: "short",
+									day: "numeric",
+								});
 
-                return (
-                  <div
-                    key={sess.id}
-                    className="flex items-center justify-between p-3.5 rounded-xl bg-card border border-border hover:bg-accent transition-all group"
-                  >
-                    <div className="flex items-center gap-3">
-                      <div
-                        className="w-3 h-3 rounded-full shrink-0 shadow-sm"
-                        style={{ backgroundColor: categoryColor }}
-                      />
-                      <div>
-                        <div className="flex items-center gap-2">
-                          <span className="text-sm font-semibold text-foreground">
-                            {sess.categoryName || 'Uncategorized'}
-                          </span>
-                          {sess.taskName && (
-                            <span className="text-xs text-muted-foreground font-normal">
-                              • {sess.taskName}
-                            </span>
-                          )}
-                        </div>
-                        <div className="flex items-center gap-3 text-[11px] text-muted-foreground mt-0.5">
-                          <span className="flex items-center gap-1">
-                            <Calendar className="w-3 h-3" />
-                            {dateFormatted} at {timeFormatted}
-                          </span>
-                          <span className="capitalize text-muted-foreground font-medium">
-                            {sess.mode === ('stopwatch' as any) ? 'Stopwatch' : 'Pomodoro'}
-                          </span>
-                        </div>
-                      </div>
-                    </div>
+								return (
+									<div
+										key={sess.id}
+										className="flex items-center justify-between p-3.5 rounded-xl bg-card border border-border hover:bg-accent transition-all group"
+									>
+										<div className="flex items-center gap-3">
+											<div
+												className="w-3 h-3 rounded-full shrink-0 shadow-sm"
+												style={{ backgroundColor: categoryColor }}
+											/>
+											<div>
+												<div className="flex items-center gap-2">
+													<span className="text-sm font-semibold text-foreground">
+														{sess.categoryName || "Uncategorized"}
+													</span>
+													{sess.taskName && (
+														<span className="text-xs text-muted-foreground font-normal">
+															• {sess.taskName}
+														</span>
+													)}
+												</div>
+												<div className="flex items-center gap-3 text-[11px] text-muted-foreground mt-0.5">
+													<span className="flex items-center gap-1">
+														<Calendar className="w-3 h-3" />
+														{dateFormatted} at {timeFormatted}
+													</span>
+													<span className="capitalize text-muted-foreground font-medium">
+														{sess.mode === ("stopwatch" as any)
+															? "Stopwatch"
+															: "Pomodoro"}
+													</span>
+												</div>
+											</div>
+										</div>
 
-                    <div className="flex items-center gap-4">
-                      <span className="text-sm font-bold font-mono text-emerald-500 bg-emerald-500/10 px-3 py-1 rounded-lg border border-emerald-500/20">
-                        {formatDuration(sess.durationSeconds)}
-                      </span>
+										<div className="flex items-center gap-4">
+											<span className="text-sm font-bold font-mono text-emerald-500 bg-emerald-500/10 px-3 py-1 rounded-lg border border-emerald-500/20">
+												{formatDuration(sess.durationSeconds)}
+											</span>
 
-                      <button
-                        onClick={() => handleDeleteSession(sess.id)}
-                        className="p-1.5 rounded-lg text-muted-foreground hover:text-rose-400 hover:bg-rose-500/10 transition-colors opacity-0 group-hover:opacity-100 cursor-pointer"
-                        title="Delete entry"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
-                    </div>
-                  </div>
-                );
-              })}
-          </div>
-        )}
-      </div>
-    </div>
-  );
+											<button
+												onClick={() => handleDeleteSession(sess.id)}
+												className="p-1.5 rounded-lg text-muted-foreground hover:text-rose-400 hover:bg-rose-500/10 transition-colors opacity-0 group-hover:opacity-100 cursor-pointer"
+												title="Delete entry"
+											>
+												<Trash2 className="w-4 h-4" />
+											</button>
+										</div>
+									</div>
+								);
+							})}
+					</div>
+				)}
+			</div>
+		</div>
+	);
 }

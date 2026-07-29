@@ -1,252 +1,307 @@
-import React, { useState } from 'react';
-import { X, Download, Upload, ShieldCheck, AlertCircle, FileJson, CheckCircle2 } from 'lucide-react';
-import { db, clearAllData, getSettings } from '../services/db';
-import { encryptData, decryptData } from '../services/crypto';
-import { cn } from '../lib/utils';
+import {
+	AlertCircle,
+	CheckCircle2,
+	Download,
+	FileJson,
+	ShieldCheck,
+	Upload,
+	X,
+} from "lucide-react";
+import type React from "react";
+import { useState } from "react";
+import { cn } from "../lib/utils";
+import { decryptData, encryptData } from "../services/crypto";
+import { clearAllData, db, getSettings } from "../services/db";
 
 export interface DataBackupModalProps {
-  isOpen: boolean;
-  onClose: () => void;
-  onRefresh: () => void;
+	isOpen: boolean;
+	onClose: () => void;
+	onRefresh: () => void;
 }
 
-export default function DataBackupModal({ isOpen, onClose, onRefresh }: DataBackupModalProps) {
-  const [exportPasscode, setExportPasscode] = useState('');
-  const [importPasscode, setImportPasscode] = useState('');
-  const [useEncryption, setUseEncryption] = useState(false);
-  const [importFile, setImportFile] = useState<File | null>(null);
-  const [message, setMessage] = useState<{ type: 'success' | 'error' | ''; text: string }>({ type: '', text: '' });
-  const [loading, setLoading] = useState(false);
+export default function DataBackupModal({
+	isOpen,
+	onClose,
+	onRefresh,
+}: DataBackupModalProps) {
+	const [exportPasscode, setExportPasscode] = useState("");
+	const [importPasscode, setImportPasscode] = useState("");
+	const [useEncryption, setUseEncryption] = useState(false);
+	const [importFile, setImportFile] = useState<File | null>(null);
+	const [message, setMessage] = useState<{
+		type: "success" | "error" | "";
+		text: string;
+	}>({ type: "", text: "" });
+	const [loading, setLoading] = useState(false);
 
-  if (!isOpen) return null;
+	if (!isOpen) return null;
 
-  const handleExport = async () => {
-    setMessage({ type: '', text: '' });
-    setLoading(true);
-    try {
-      const projects = await db.projects.toArray();
-      const tasks = await db.tasks.toArray();
-      const sessions = await db.sessions.toArray();
-      const settings = await getSettings();
+	const handleExport = async () => {
+		setMessage({ type: "", text: "" });
+		setLoading(true);
+		try {
+			const projects = await db.projects.toArray();
+			const tasks = await db.tasks.toArray();
+			const sessions = await db.sessions.toArray();
+			const settings = await getSettings();
 
-      const backupPayload = {
-        app: 'Gojodoro',
-        exportedAt: new Date().toISOString(),
-        version: 1,
-        data: {
-          projects,
-          tasks,
-          sessions,
-          settings
-        }
-      };
+			const backupPayload = {
+				app: "Gojodoro",
+				exportedAt: new Date().toISOString(),
+				version: 1,
+				data: {
+					projects,
+					tasks,
+					sessions,
+					settings,
+				},
+			};
 
-      let finalContentString = JSON.stringify(backupPayload, null, 2);
-      let filename = `Gojodoro-backup-${new Date().toISOString().split('T')[0]}.json`;
+			let finalContentString = JSON.stringify(backupPayload, null, 2);
+			let filename = `Gojodoro-backup-${new Date().toISOString().split("T")[0]}.json`;
 
-      if (useEncryption) {
-        if (!exportPasscode) {
-          setMessage({ type: 'error', text: 'Please provide a passcode to encrypt the export file.' });
-          setLoading(false);
-          return;
-        }
-        finalContentString = await encryptData(finalContentString, exportPasscode);
-        filename = `Gojodoro-encrypted-backup-${new Date().toISOString().split('T')[0]}.json`;
-      }
+			if (useEncryption) {
+				if (!exportPasscode) {
+					setMessage({
+						type: "error",
+						text: "Please provide a passcode to encrypt the export file.",
+					});
+					setLoading(false);
+					return;
+				}
+				finalContentString = await encryptData(
+					finalContentString,
+					exportPasscode,
+				);
+				filename = `Gojodoro-encrypted-backup-${new Date().toISOString().split("T")[0]}.json`;
+			}
 
-      const blob = new Blob([finalContentString], { type: 'application/json' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = filename;
-      a.click();
-      URL.revokeObjectURL(url);
+			const blob = new Blob([finalContentString], { type: "application/json" });
+			const url = URL.createObjectURL(blob);
+			const a = document.createElement("a");
+			a.href = url;
+			a.download = filename;
+			a.click();
+			URL.revokeObjectURL(url);
 
-      setMessage({ type: 'success', text: `Backup file "${filename}" downloaded successfully!` });
-    } catch (err) {
-      console.error(err);
-      setMessage({ type: 'error', text: 'Failed to export backup data.' });
-    } finally {
-      setLoading(false);
-    }
-  };
+			setMessage({
+				type: "success",
+				text: `Backup file "${filename}" downloaded successfully!`,
+			});
+		} catch (err) {
+			console.error(err);
+			setMessage({ type: "error", text: "Failed to export backup data." });
+		} finally {
+			setLoading(false);
+		}
+	};
 
-  const handleImport = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!importFile) {
-      setMessage({ type: 'error', text: 'Please select a JSON backup file to import.' });
-      return;
-    }
+	const handleImport = async (e: React.FormEvent) => {
+		e.preventDefault();
+		if (!importFile) {
+			setMessage({
+				type: "error",
+				text: "Please select a JSON backup file to import.",
+			});
+			return;
+		}
 
-    setMessage({ type: '', text: '' });
-    setLoading(true);
+		setMessage({ type: "", text: "" });
+		setLoading(true);
 
-    try {
-      const text = await importFile.text();
-      let parsed = JSON.parse(text);
+		try {
+			const text = await importFile.text();
+			let parsed = JSON.parse(text);
 
-      // Check if file is encrypted payload
-      if (parsed.encrypted) {
-        if (!importPasscode) {
-          setMessage({ type: 'error', text: 'This file is encrypted. Enter the decryption passcode.' });
-          setLoading(false);
-          return;
-        }
-        const decryptedStr = await decryptData(parsed, importPasscode);
-        parsed = JSON.parse(decryptedStr);
-      }
+			// Check if file is encrypted payload
+			if (parsed.encrypted) {
+				if (!importPasscode) {
+					setMessage({
+						type: "error",
+						text: "This file is encrypted. Enter the decryption passcode.",
+					});
+					setLoading(false);
+					return;
+				}
+				const decryptedStr = await decryptData(parsed, importPasscode);
+				parsed = JSON.parse(decryptedStr);
+			}
 
-      if (!parsed.data || !Array.isArray(parsed.data.projects) || !Array.isArray(parsed.data.sessions)) {
-        throw new Error('Invalid Gojodoro backup file structure.');
-      }
+			if (
+				!parsed.data ||
+				!Array.isArray(parsed.data.projects) ||
+				!Array.isArray(parsed.data.sessions)
+			) {
+				throw new Error("Invalid Gojodoro backup file structure.");
+			}
 
-      // Restore data to IndexedDB
-      await clearAllData();
+			// Restore data to IndexedDB
+			await clearAllData();
 
-      if (parsed.data.projects?.length > 0) {
-        await db.projects.bulkAdd(parsed.data.projects);
-      }
-      if (parsed.data.tasks?.length > 0) {
-        const normalizedTasks = parsed.data.tasks.map((t: any) => ({
-          ...t,
-          status: t.status || (t.completed ? 'done' : 'not_started'),
-          priority: t.priority || 'medium',
-          completed: t.status ? t.status === 'done' : Boolean(t.completed)
-        }));
-        await db.tasks.bulkAdd(normalizedTasks);
-      }
-      if (parsed.data.sessions?.length > 0) {
-        await db.sessions.bulkAdd(parsed.data.sessions);
-      }
-      if (parsed.data.settings) {
-        const entries = Object.entries(parsed.data.settings).map(([key, value]) => ({ key, value }));
-        await db.settings.bulkPut(entries);
-      }
+			if (parsed.data.projects?.length > 0) {
+				await db.projects.bulkAdd(parsed.data.projects);
+			}
+			if (parsed.data.tasks?.length > 0) {
+				const normalizedTasks = parsed.data.tasks.map((t: any) => ({
+					...t,
+					status: t.status || (t.completed ? "done" : "not_started"),
+					priority: t.priority || "medium",
+					completed: t.status ? t.status === "done" : Boolean(t.completed),
+				}));
+				await db.tasks.bulkAdd(normalizedTasks);
+			}
+			if (parsed.data.sessions?.length > 0) {
+				await db.sessions.bulkAdd(parsed.data.sessions);
+			}
+			if (parsed.data.settings) {
+				const entries = Object.entries(parsed.data.settings).map(
+					([key, value]) => ({ key, value }),
+				);
+				await db.settings.bulkPut(entries);
+			}
 
-      setMessage({ type: 'success', text: 'Data imported successfully! Reloading workspace...' });
-      setTimeout(() => {
-        onRefresh();
-        onClose();
-      }, 1500);
-    } catch (err: any) {
-      console.error(err);
-      setMessage({ type: 'error', text: err?.message || 'Failed to parse or decrypt backup file.' });
-    } finally {
-      setLoading(false);
-    }
-  };
+			setMessage({
+				type: "success",
+				text: "Data imported successfully! Reloading workspace...",
+			});
+			setTimeout(() => {
+				onRefresh();
+				onClose();
+			}, 1500);
+		} catch (err: any) {
+			console.error(err);
+			setMessage({
+				type: "error",
+				text: err?.message || "Failed to parse or decrypt backup file.",
+			});
+		} finally {
+			setLoading(false);
+		}
+	};
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-md p-4">
-      <div className="w-full max-w-lg glass-card rounded-2xl p-6 border border-border shadow-2xl relative text-foreground">
-        <div className="flex items-center justify-between pb-4 border-b border-border">
-          <div className="flex items-center gap-2.5">
-            <FileJson className="w-5 h-5 text-indigo-400" />
-            <h3 className="text-lg font-bold text-foreground">Import & Export Data</h3>
-          </div>
-          <button
-            onClick={onClose}
-            className="p-1 rounded-lg text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
-          >
-            <X className="w-5 h-5" />
-          </button>
-        </div>
+	return (
+		<div className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-md p-4">
+			<div className="w-full max-w-lg glass-card rounded-2xl p-6 border border-border shadow-2xl relative text-foreground">
+				<div className="flex items-center justify-between pb-4 border-b border-border">
+					<div className="flex items-center gap-2.5">
+						<FileJson className="w-5 h-5 text-indigo-400" />
+						<h3 className="text-lg font-bold text-foreground">
+							Import & Export Data
+						</h3>
+					</div>
+					<button
+						onClick={onClose}
+						className="p-1 rounded-lg text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
+					>
+						<X className="w-5 h-5" />
+					</button>
+				</div>
 
-        {message.text && (
-          <div
-            className={cn(
-              "mt-4 p-3 rounded-xl border text-xs flex items-center gap-2",
-              message.type === 'success'
-                ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-500"
-                : "bg-rose-500/10 border-rose-500/30 text-rose-500"
-            )}
-          >
-            {message.type === 'success' ? <CheckCircle2 className="w-4 h-4 shrink-0" /> : <AlertCircle className="w-4 h-4 shrink-0" />}
-            <span>{message.text}</span>
-          </div>
-        )}
+				{message.text && (
+					<div
+						className={cn(
+							"mt-4 p-3 rounded-xl border text-xs flex items-center gap-2",
+							message.type === "success"
+								? "bg-emerald-500/10 border-emerald-500/30 text-emerald-500"
+								: "bg-rose-500/10 border-rose-500/30 text-rose-500",
+						)}
+					>
+						{message.type === "success" ? (
+							<CheckCircle2 className="w-4 h-4 shrink-0" />
+						) : (
+							<AlertCircle className="w-4 h-4 shrink-0" />
+						)}
+						<span>{message.text}</span>
+					</div>
+				)}
 
-        <div className="py-5 space-y-6">
-          {/* Export Section */}
-          <div className="bg-card rounded-xl p-4 border border-border space-y-3">
-            <h4 className="text-sm font-semibold text-foreground flex items-center gap-2">
-              <Download className="w-4 h-4 text-rose-400" />
-              <span>Export JSON Backup</span>
-            </h4>
-            <p className="text-xs text-muted-foreground">
-              Download your projects, tasks, and session logs to a JSON file.
-            </p>
+				<div className="py-5 space-y-6">
+					{/* Export Section */}
+					<div className="bg-card rounded-xl p-4 border border-border space-y-3">
+						<h4 className="text-sm font-semibold text-foreground flex items-center gap-2">
+							<Download className="w-4 h-4 text-rose-400" />
+							<span>Export JSON Backup</span>
+						</h4>
+						<p className="text-xs text-muted-foreground">
+							Download your projects, tasks, and session logs to a JSON file.
+						</p>
 
-            <div className="flex items-center gap-2 pt-1">
-              <input
-                type="checkbox"
-                id="encryptExport"
-                checked={useEncryption}
-                onChange={(e) => setUseEncryption(e.target.checked)}
-                className="rounded border-border text-rose-500 focus:ring-rose-500 bg-input cursor-pointer"
-              />
-              <label htmlFor="encryptExport" className="text-xs text-foreground cursor-pointer flex items-center gap-1.5">
-                <ShieldCheck className="w-3.5 h-3.5 text-indigo-400" />
-                Encrypt backup with passcode
-              </label>
-            </div>
+						<div className="flex items-center gap-2 pt-1">
+							<input
+								type="checkbox"
+								id="encryptExport"
+								checked={useEncryption}
+								onChange={(e) => setUseEncryption(e.target.checked)}
+								className="rounded border-border text-rose-500 focus:ring-rose-500 bg-input cursor-pointer"
+							/>
+							<label
+								htmlFor="encryptExport"
+								className="text-xs text-foreground cursor-pointer flex items-center gap-1.5"
+							>
+								<ShieldCheck className="w-3.5 h-3.5 text-indigo-400" />
+								Encrypt backup with passcode
+							</label>
+						</div>
 
-            {useEncryption && (
-              <input
-                type="password"
-                value={exportPasscode}
-                onChange={(e) => setExportPasscode(e.target.value)}
-                placeholder="Enter passcode for file encryption"
-                className="w-full bg-input border border-border text-foreground rounded-xl px-3 py-2 text-xs focus:outline-none focus:border-rose-500"
-              />
-            )}
+						{useEncryption && (
+							<input
+								type="password"
+								value={exportPasscode}
+								onChange={(e) => setExportPasscode(e.target.value)}
+								placeholder="Enter passcode for file encryption"
+								className="w-full bg-input border border-border text-foreground rounded-xl px-3 py-2 text-xs focus:outline-none focus:border-rose-500"
+							/>
+						)}
 
-            <button
-              onClick={handleExport}
-              disabled={loading}
-              className="w-full bg-muted hover:bg-accent text-foreground font-medium py-2.5 rounded-xl text-xs flex items-center justify-center gap-2 transition-colors cursor-pointer border border-border"
-            >
-              <Download className="w-4 h-4" />
-              <span>{loading ? 'Exporting...' : 'Download Backup File'}</span>
-            </button>
-          </div>
+						<button
+							onClick={handleExport}
+							disabled={loading}
+							className="w-full bg-muted hover:bg-accent text-foreground font-medium py-2.5 rounded-xl text-xs flex items-center justify-center gap-2 transition-colors cursor-pointer border border-border"
+						>
+							<Download className="w-4 h-4" />
+							<span>{loading ? "Exporting..." : "Download Backup File"}</span>
+						</button>
+					</div>
 
-          {/* Import Section */}
-          <form onSubmit={handleImport} className="bg-card rounded-xl p-4 border border-border space-y-3">
-            <h4 className="text-sm font-semibold text-foreground flex items-center gap-2">
-              <Upload className="w-4 h-4 text-emerald-400" />
-              <span>Import JSON Backup</span>
-            </h4>
-            <p className="text-xs text-muted-foreground">
-              Restore your workspace from a previously exported `.json` file.
-            </p>
+					{/* Import Section */}
+					<form
+						onSubmit={handleImport}
+						className="bg-card rounded-xl p-4 border border-border space-y-3"
+					>
+						<h4 className="text-sm font-semibold text-foreground flex items-center gap-2">
+							<Upload className="w-4 h-4 text-emerald-400" />
+							<span>Import JSON Backup</span>
+						</h4>
+						<p className="text-xs text-muted-foreground">
+							Restore your workspace from a previously exported `.json` file.
+						</p>
 
-            <input
-              type="file"
-              accept=".json"
-              onChange={(e) => setImportFile(e.target.files?.[0] || null)}
-              className="w-full text-xs text-muted-foreground file:mr-3 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-muted file:text-foreground hover:file:bg-accent cursor-pointer"
-            />
+						<input
+							type="file"
+							accept=".json"
+							onChange={(e) => setImportFile(e.target.files?.[0] || null)}
+							className="w-full text-xs text-muted-foreground file:mr-3 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-muted file:text-foreground hover:file:bg-accent cursor-pointer"
+						/>
 
-            <input
-              type="password"
-              value={importPasscode}
-              onChange={(e) => setImportPasscode(e.target.value)}
-              placeholder="Decryption passcode (if file is encrypted)"
-              className="w-full bg-input border border-border text-foreground rounded-xl px-3 py-2 text-xs focus:outline-none focus:border-emerald-500"
-            />
+						<input
+							type="password"
+							value={importPasscode}
+							onChange={(e) => setImportPasscode(e.target.value)}
+							placeholder="Decryption passcode (if file is encrypted)"
+							className="w-full bg-input border border-border text-foreground rounded-xl px-3 py-2 text-xs focus:outline-none focus:border-emerald-500"
+						/>
 
-            <button
-              type="submit"
-              disabled={loading || !importFile}
-              className="w-full bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white font-semibold py-2.5 rounded-xl text-xs flex items-center justify-center gap-2 transition-colors shadow-md shadow-emerald-500/20 cursor-pointer disabled:opacity-50"
-            >
-              <Upload className="w-4 h-4" />
-              <span>{loading ? 'Restoring...' : 'Restore Data from File'}</span>
-            </button>
-          </form>
-        </div>
-      </div>
-    </div>
-  );
+						<button
+							type="submit"
+							disabled={loading || !importFile}
+							className="w-full bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white font-semibold py-2.5 rounded-xl text-xs flex items-center justify-center gap-2 transition-colors shadow-md shadow-emerald-500/20 cursor-pointer disabled:opacity-50"
+						>
+							<Upload className="w-4 h-4" />
+							<span>{loading ? "Restoring..." : "Restore Data from File"}</span>
+						</button>
+					</form>
+				</div>
+			</div>
+		</div>
+	);
 }
