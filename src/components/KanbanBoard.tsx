@@ -1,21 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import {
-  Circle,
-  ArrowRightCircle,
-  Flame,
-  CheckCircle2,
-  Plus,
-  Trash2,
-  Play,
-  Clock,
-  Edit3,
-  Check,
-  X,
-  ChevronDown,
-  ChevronUp
+  Plus
 } from 'lucide-react';
+import { DragDropContext, Droppable, Draggable, DropResult } from '@hello-pangea/dnd';
 import { Project, Task, TaskStatus, TaskPriority, Session } from '../types';
-import { STATUS_CONFIG, PRIORITY_CONFIG } from './ProjectManager';
+import { STATUS_CONFIG } from './ProjectManager';
+import { KanbanTaskCard } from './project/KanbanTaskCard';
 import { db } from '../services/db';
 import { cn } from '../lib/utils';
 
@@ -68,7 +58,6 @@ export default function KanbanBoard({
     selectedProjectFilter && selectedProjectFilter !== 'all' && selectedProjectFilter !== 'uncategorized'
       ? selectedProjectFilter
       : '';
-
 
   // Column-specific new task input state
   const [columnInput, setColumnInput] = useState<Record<TaskStatus, string>>({
@@ -145,7 +134,16 @@ export default function KanbanBoard({
     onRefresh();
   };
 
-  const handleMoveTaskStatus = async (task: Task, newStatus: TaskStatus) => {
+  const handleMoveTaskStatus = async (task: Task) => {
+    const taskStatus = (task.status || 'not_started') as TaskStatus;
+    const nextMap: Record<TaskStatus, TaskStatus> = {
+      not_started: 'next',
+      next: 'in_progress',
+      in_progress: 'done',
+      done: 'not_started'
+    };
+    const newStatus = nextMap[taskStatus];
+
     await db.tasks.update(task.id, {
       status: newStatus,
       completed: newStatus === 'done'
@@ -182,6 +180,34 @@ export default function KanbanBoard({
     onRefresh();
   };
 
+  const handleToggleExpand = (task: Task) => {
+    const isExpanded = expandedTaskId === task.id;
+    setExpandedTaskId(isExpanded ? null : task.id);
+    setEditingNote(task.description || '');
+  };
+
+  const handleDragEnd = async (result: DropResult) => {
+    const { destination, source, draggableId } = result;
+
+    if (!destination) return;
+
+    if (
+      destination.droppableId === source.droppableId &&
+      destination.index === source.index
+    ) {
+      return;
+    }
+
+    const newStatus = destination.droppableId as TaskStatus;
+
+    await db.tasks.update(draggableId, {
+      status: newStatus,
+      completed: newStatus === 'done'
+    });
+
+    onRefresh();
+  };
+
   const projectMap = React.useMemo(() => {
     const map = new Map<string, Project>();
     projects.forEach(p => map.set(p.id, p));
@@ -189,308 +215,199 @@ export default function KanbanBoard({
   }, [projects]);
 
   return (
-    <div className="w-full space-y-4">
-      {/* Board Columns Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 items-start">
-        {KANBAN_COLUMNS.map((col) => {
-          const colTasks = tasks.filter(t => (t.status || 'not_started') === col.status);
-          const statusCfg = STATUS_CONFIG[col.status];
-          const StatusIcon = statusCfg.icon;
+    <DragDropContext onDragEnd={handleDragEnd}>
+      <div className="w-full space-y-4">
+        {/* Board Columns Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 items-start">
+          {KANBAN_COLUMNS.map((col) => {
+            const colTasks = tasks.filter(t => (t.status || 'not_started') === col.status);
+            const statusCfg = STATUS_CONFIG[col.status];
+            const StatusIcon = statusCfg.icon;
 
-          return (
-            <div
-              key={col.status}
-              className="glass-panel rounded-2xl border border-border/80 p-3.5 flex flex-col min-h-156 bg-card/40 backdrop-blur-md transition-all shadow-sm"
-            >
-              {/* Column Header */}
-              <div className="flex items-center justify-between pb-3 mb-3 border-b border-border/60">
-                <div className="flex items-center gap-2">
-                  <div className={cn("p-1.5 rounded-lg border", col.bgHeader, col.borderHeader)}>
-                    <StatusIcon className="w-4 h-4" />
+            return (
+              <div
+                key={col.status}
+                className="glass-panel rounded-2xl border border-border/80 p-3.5 flex flex-col min-h-156 bg-card/40 backdrop-blur-md transition-all shadow-sm"
+              >
+                {/* Column Header */}
+                <div className="flex items-center justify-between pb-3 mb-3 border-b border-border/60">
+                  <div className="flex items-center gap-2">
+                    <div className={cn("p-1.5 rounded-lg border", col.bgHeader, col.borderHeader)}>
+                      <StatusIcon className="w-4 h-4" />
+                    </div>
+                    <h3 className="font-bold text-sm text-foreground tracking-tight">{col.label}</h3>
+                    <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-muted border border-border text-muted-foreground">
+                      {colTasks.length}
+                    </span>
                   </div>
-                  <h3 className="font-bold text-sm text-foreground tracking-tight">{col.label}</h3>
-                  <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-muted border border-border text-muted-foreground">
-                    {colTasks.length}
-                  </span>
+
+                  <button
+                    onClick={() => {
+                      const isOpening = !showAddForm[col.status];
+                      if (isOpening) {
+                        setColumnSelectedProject(prev => ({ ...prev, [col.status]: activeDefaultProject }));
+                      }
+                      setShowAddForm({ ...showAddForm, [col.status]: isOpening });
+                    }}
+                    className="p-1.5 rounded-lg hover:bg-accent text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
+                    title={`Add Task to ${col.label}`}
+                  >
+                    <Plus className="w-4 h-4" />
+                  </button>
                 </div>
 
-                <button
-                  onClick={() => {
-                    const isOpening = !showAddForm[col.status];
-                    if (isOpening) {
-                      setColumnSelectedProject(prev => ({ ...prev, [col.status]: activeDefaultProject }));
-                    }
-                    setShowAddForm({ ...showAddForm, [col.status]: isOpening });
-                  }}
-                  className="p-1.5 rounded-lg hover:bg-accent text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
-                  title={`Add Task to ${col.label}`}
-                >
-                  <Plus className="w-4 h-4" />
-                </button>
-              </div>
-
-              {/* Quick Add Form in Column */}
-              {showAddForm[col.status] && (
-                <form
-                  onSubmit={(e) => handleQuickAddTask(col.status, e)}
-                  className="mb-3 p-3 rounded-xl bg-card border border-border space-y-2 shadow-lg animate-in fade-in slide-in-from-top-2 duration-200"
-                >
-                  <input
-                    type="text"
-                    value={columnInput[col.status] || ''}
-                    onChange={(e) => setColumnInput({ ...columnInput, [col.status]: e.target.value })}
-                    placeholder="Task name..."
-                    className="w-full bg-input border border-border focus:border-rose-500 text-foreground text-xs rounded-lg p-2 focus:outline-none"
-                    autoFocus
-                  />
-
-                  <select
-                    value={columnSelectedProject[col.status] !== undefined ? columnSelectedProject[col.status] : activeDefaultProject}
-                    onChange={(e) => setColumnSelectedProject({ ...columnSelectedProject, [col.status]: e.target.value })}
-                    className="w-full bg-card border border-border text-foreground text-[11px] rounded-lg p-1.5 focus:outline-none cursor-pointer"
+                {/* Quick Add Form in Column */}
+                {showAddForm[col.status] && (
+                  <form
+                    onSubmit={(e) => handleQuickAddTask(col.status, e)}
+                    className="mb-3 p-3 rounded-xl bg-card border border-border space-y-2 shadow-lg animate-in fade-in slide-in-from-top-2 duration-200"
                   >
-                    <option value="">No Project (Uncategorized)</option>
-                    {projects.map(p => (
-                      <option key={p.id} value={p.id}>
-                        Project: {p.name}
-                      </option>
-                    ))}
-                  </select>
+                    <input
+                      type="text"
+                      value={columnInput[col.status] || ''}
+                      onChange={(e) => setColumnInput({ ...columnInput, [col.status]: e.target.value })}
+                      placeholder="Task name..."
+                      className="w-full bg-input border border-border focus:border-rose-500 text-foreground text-xs rounded-lg p-2 focus:outline-none"
+                      autoFocus
+                    />
 
-                  <div className="flex items-center justify-end gap-1.5 pt-1">
-                    <button
-                      type="button"
-                      onClick={() => setShowAddForm({ ...showAddForm, [col.status]: false })}
-                      className="px-2.5 py-1 text-[11px] font-medium text-muted-foreground hover:bg-muted rounded-lg cursor-pointer"
+                    <select
+                      value={columnSelectedProject[col.status] !== undefined ? columnSelectedProject[col.status] : activeDefaultProject}
+                      onChange={(e) => setColumnSelectedProject({ ...columnSelectedProject, [col.status]: e.target.value })}
+                      className="w-full bg-card border border-border text-foreground text-[11px] rounded-lg p-1.5 focus:outline-none cursor-pointer"
                     >
-                      Cancel
-                    </button>
-                    <button
-                      type="submit"
-                      className="px-3 py-1 text-[11px] font-semibold text-white bg-rose-500 hover:bg-rose-600 rounded-lg cursor-pointer shadow-sm"
-                    >
-                      Add
-                    </button>
-                  </div>
-                </form>
-              )}
+                      <option value="">No Project (Uncategorized)</option>
+                      {projects.map(p => (
+                        <option key={p.id} value={p.id}>
+                          Project: {p.name}
+                        </option>
+                      ))}
+                    </select>
 
-              {/* Column Task Cards Stack with Height Limit & Vertical Scroll */}
-              <div className="flex-1 max-h-135 overflow-y-auto space-y-3 pr-1">
-                {colTasks.length === 0 ? (
-                  <div className="h-32 border-2 border-dashed border-border/40 rounded-xl flex items-center justify-center text-muted-foreground text-xs italic">
-                    No tasks
-                  </div>
-                ) : (
-                  (() => {
-                    const limit = visibleCounts[col.status] || 5;
-                    const displayedTasks = colTasks.slice(0, limit);
-                    const remainingCount = colTasks.length - displayedTasks.length;
+                    <div className="flex items-center justify-end gap-1.5 pt-1">
+                      <button
+                        type="button"
+                        onClick={() => setShowAddForm({ ...showAddForm, [col.status]: false })}
+                        className="px-2.5 py-1 text-[11px] font-medium text-muted-foreground hover:bg-muted rounded-lg cursor-pointer"
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        type="submit"
+                        className="px-3 py-1 text-[11px] font-semibold text-white bg-rose-500 hover:bg-rose-600 rounded-lg cursor-pointer shadow-sm"
+                      >
+                        Add
+                      </button>
+                    </div>
+                  </form>
+                )}
 
+                {/* Column Task Cards Droppable Area */}
+                <Droppable
+                  droppableId={col.status}
+                  renderClone={(provided, snapshot, rubric) => {
+                    const task = colTasks[rubric.source.index];
+                    if (!task) return null;
                     return (
-                      <>
-                        {displayedTasks.map((task) => {
-                          const proj = projectMap.get(task.projectId);
-                          const priorityCfg = PRIORITY_CONFIG[task.priority || 'medium'];
-                          const pomodoroCount = getTaskPomodoroCount(task.id);
-                          const isExpanded = expandedTaskId === task.id;
+                      <KanbanTaskCard
+                        task={task}
+                        project={projectMap.get(task.projectId)}
+                        pomodoroCount={getTaskPomodoroCount(task.id)}
+                        isEditing={editingTaskId === task.id}
+                        editingName={editingName}
+                        setEditingName={setEditingName}
+                        isExpanded={expandedTaskId === task.id}
+                        editingNote={editingNote}
+                        setEditingNote={setEditingNote}
+                        draggableProvided={provided}
+                        draggableSnapshot={snapshot}
+                        onStartEditing={handleStartEditing}
+                        onSaveEditing={handleSaveEditing}
+                        onCancelEditing={() => setEditingTaskId(null)}
+                        onSaveNote={handleSaveNote}
+                        onToggleExpand={handleToggleExpand}
+                        onUpdatePriority={handleUpdatePriority}
+                        onMoveTaskStatus={handleMoveTaskStatus}
+                        onDeleteTask={handleDeleteTask}
+                        onStartTaskFocus={onStartTaskFocus}
+                      />
+                    );
+                  }}
+                >
+                  {(droppableProvided, snapshot) => (
+                    <div
+                      ref={droppableProvided.innerRef}
+                      {...droppableProvided.droppableProps}
+                      className={cn(
+                        "flex-1 max-h-135 overflow-y-auto space-y-3 pr-1 rounded-xl transition-colors p-1",
+                        snapshot.isDraggingOver && "bg-rose-500/5 ring-1 ring-rose-500/30 ring-dashed"
+                      )}
+                    >
+                      {colTasks.length === 0 ? (
+                        <div className="h-32 border-2 border-dashed border-border/40 rounded-xl flex items-center justify-center text-muted-foreground text-xs italic">
+                          No tasks
+                        </div>
+                      ) : (
+                        (() => {
+                          const limit = visibleCounts[col.status] || 5;
+                          const displayedTasks = colTasks.slice(0, limit);
+                          const remainingCount = colTasks.length - displayedTasks.length;
 
                           return (
-                            <div
-                              key={task.id}
-                              className="group relative rounded-xl bg-card hover:bg-card/90 border border-border/80 p-3 shadow-xs transition-all hover:shadow-md space-y-2.5"
-                            >
-                              {/* Project Badge & Header */}
-                              <div className="flex items-center justify-between gap-2">
-                                <div className="flex items-center gap-1.5 min-w-0">
-                                  <span
-                                    className="w-2.5 h-2.5 rounded-full shrink-0"
-                                    style={{ backgroundColor: proj ? proj.color : '#94a3b8' }}
-                                  />
-                                  <span className="text-[11px] font-semibold text-muted-foreground truncate">
-                                    {proj ? proj.name : 'Uncategorized'}
-                                  </span>
-                                </div>
-
-                                {/* Priority Chip Select */}
-                                <select
-                                  value={task.priority || 'medium'}
-                                  onChange={(e) => handleUpdatePriority(task, e.target.value as TaskPriority)}
-                                  className={cn(
-                                    "px-1.5 py-0.5 rounded-md border text-[10px] font-semibold focus:outline-none cursor-pointer shrink-0 transition-colors",
-                                    priorityCfg.badgeClass
+                            <>
+                              {displayedTasks.map((task, index) => (
+                                <Draggable key={task.id} draggableId={task.id} index={index}>
+                                  {(draggableProvided, draggableSnapshot) => (
+                                    <KanbanTaskCard
+                                      task={task}
+                                      project={projectMap.get(task.projectId)}
+                                      pomodoroCount={getTaskPomodoroCount(task.id)}
+                                      isEditing={editingTaskId === task.id}
+                                      editingName={editingName}
+                                      setEditingName={setEditingName}
+                                      isExpanded={expandedTaskId === task.id}
+                                      editingNote={editingNote}
+                                      setEditingNote={setEditingNote}
+                                      draggableProvided={draggableProvided}
+                                      draggableSnapshot={draggableSnapshot}
+                                      onStartEditing={handleStartEditing}
+                                      onSaveEditing={handleSaveEditing}
+                                      onCancelEditing={() => setEditingTaskId(null)}
+                                      onSaveNote={handleSaveNote}
+                                      onToggleExpand={handleToggleExpand}
+                                      onUpdatePriority={handleUpdatePriority}
+                                      onMoveTaskStatus={handleMoveTaskStatus}
+                                      onDeleteTask={handleDeleteTask}
+                                      onStartTaskFocus={onStartTaskFocus}
+                                    />
                                   )}
+                                </Draggable>
+                              ))}
+
+                              {/* Load More Button */}
+                              {remainingCount > 0 && (
+                                <button
+                                  onClick={() => setVisibleCounts({ ...visibleCounts, [col.status]: limit + 5 })}
+                                  className="w-full py-2 rounded-xl bg-card hover:bg-card/80 border border-dashed border-border/80 text-muted-foreground hover:text-foreground text-xs font-semibold transition-all cursor-pointer shadow-xs flex items-center justify-center gap-1.5"
                                 >
-                                  <option value="urgent" className="bg-card text-foreground">Urgent</option>
-                                  <option value="high" className="bg-card text-foreground">High</option>
-                                  <option value="medium" className="bg-card text-foreground">Medium</option>
-                                  <option value="low" className="bg-card text-foreground">Low</option>
-                                </select>
-                              </div>
-
-                              {/* Task Title (Inline editable) */}
-                              {editingTaskId === task.id ? (
-                                <div className="flex items-center gap-1">
-                                  <input
-                                    type="text"
-                                    value={editingName}
-                                    onChange={(e) => setEditingName(e.target.value)}
-                                    className="flex-1 bg-input border border-rose-500 text-foreground text-xs rounded-lg px-2 py-1 focus:outline-none"
-                                    autoFocus
-                                  />
-                                  <button
-                                    onClick={() => handleSaveEditing(task.id)}
-                                    className="p-1 text-emerald-400 hover:bg-emerald-500/10 rounded-md"
-                                  >
-                                    <Check className="w-3.5 h-3.5" />
-                                  </button>
-                                  <button
-                                    onClick={() => setEditingTaskId(null)}
-                                    className="p-1 text-slate-400 hover:bg-slate-500/10 rounded-md"
-                                  >
-                                    <X className="w-3.5 h-3.5" />
-                                  </button>
-                                </div>
-                              ) : (
-                                <div className="flex items-start justify-between gap-2 group/title">
-                                  <h4
-                                    onClick={() => handleStartEditing(task)}
-                                    className={cn(
-                                      "text-xs font-semibold leading-snug text-foreground cursor-pointer hover:text-rose-400 transition-colors wrap-break-word flex-1",
-                                      task.status === 'done' && "line-through text-muted-foreground"
-                                    )}
-                                    title="Click to edit title"
-                                  >
-                                    {task.name}
-                                  </h4>
-                                  <button
-                                    onClick={() => handleStartEditing(task)}
-                                    className="opacity-0 group-hover/title:opacity-100 p-0.5 text-muted-foreground hover:text-foreground transition-opacity"
-                                  >
-                                    <Edit3 className="w-3 h-3" />
-                                  </button>
-                                </div>
+                                  <span>Load More (+{remainingCount} remaining)</span>
+                                </button>
                               )}
-
-                              {/* Task Note / Description Section */}
-                              {task.description && (
-                                <p className="text-[11px] text-muted-foreground/90 bg-muted/50 p-1.5 rounded-lg border border-border/40 line-clamp-2">
-                                  {task.description}
-                                </p>
-                              )}
-
-                              {/* Expandable note editor */}
-                              {isExpanded && (
-                                <div className="pt-2 border-t border-border/50 space-y-1.5">
-                                  <label className="text-[10px] font-semibold text-muted-foreground block">Task Note / Description</label>
-                                  <textarea
-                                    value={editingNote}
-                                    onChange={(e) => setEditingNote(e.target.value)}
-                                    placeholder="Add task notes or context..."
-                                    rows={2}
-                                    className="w-full bg-input border border-border focus:border-indigo-500 text-foreground text-xs rounded-lg p-2 focus:outline-none resize-none"
-                                  />
-                                  <div className="flex justify-end gap-1">
-                                    <button
-                                      onClick={() => setExpandedTaskId(null)}
-                                      className="px-2 py-0.5 text-[10px] text-muted-foreground hover:text-foreground"
-                                    >
-                                      Cancel
-                                    </button>
-                                    <button
-                                      onClick={() => {
-                                        handleSaveNote(task.id);
-                                        setExpandedTaskId(null);
-                                      }}
-                                      className="px-2 py-0.5 text-[10px] font-semibold bg-rose-500 text-white rounded-md hover:bg-rose-600"
-                                    >
-                                      Save Note
-                                    </button>
-                                  </div>
-                                </div>
-                              )}
-
-                              {/* Footer Details: Sessions Counter, Move Buttons, Start Focus */}
-                              <div className="flex items-center justify-between pt-2 border-t border-border/40 gap-1 text-[11px]">
-                                {/* Pomodoro Session Badge */}
-                                <div
-                                  className="flex items-center gap-1 text-muted-foreground font-medium cursor-pointer hover:text-foreground"
-                                  onClick={() => {
-                                    setExpandedTaskId(isExpanded ? null : task.id);
-                                    setEditingNote(task.description || '');
-                                  }}
-                                  title="Click to view/edit notes"
-                                >
-                                  <Clock className="w-3 h-3 text-rose-400" />
-                                  <span>{pomodoroCount} {pomodoroCount === 1 ? 'session' : 'sessions'}</span>
-                                  {isExpanded ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
-                                </div>
-
-                                {/* Quick Actions */}
-                                <div className="flex items-center gap-1">
-                                  {/* Move Status Buttons */}
-                                  {col.status !== 'done' && (
-                                    <button
-                                      onClick={() => {
-                                        const nextMap: Record<TaskStatus, TaskStatus> = {
-                                          not_started: 'next',
-                                          next: 'in_progress',
-                                          in_progress: 'done',
-                                          done: 'not_started'
-                                        };
-                                        handleMoveTaskStatus(task, nextMap[col.status]);
-                                      }}
-                                      className="p-1 rounded-md text-muted-foreground hover:text-indigo-400 hover:bg-indigo-500/10 transition-colors"
-                                      title="Move to next status stage"
-                                    >
-                                      <ArrowRightCircle className="w-3.5 h-3.5" />
-                                    </button>
-                                  )}
-
-                                  {/* Direct Start Focus Launcher */}
-                                  {onStartTaskFocus && col.status !== 'done' && (
-                                    <button
-                                      onClick={() => onStartTaskFocus(task.projectId, task.id)}
-                                      className="flex items-center gap-1 bg-rose-500/15 hover:bg-rose-500 border border-rose-500/30 hover:border-rose-500 text-rose-400 hover:text-white px-2 py-0.5 rounded-lg text-[10px] font-semibold transition-all shadow-xs cursor-pointer"
-                                      title="Start Pomodoro Focus Session for this task"
-                                    >
-                                      <Play className="w-2.5 h-2.5 fill-current" />
-                                      <span>Focus</span>
-                                    </button>
-                                  )}
-
-                                  {/* Delete Button */}
-                                  <button
-                                    onClick={() => handleDeleteTask(task.id)}
-                                    className="p-1 rounded-md text-muted-foreground hover:text-rose-400 hover:bg-rose-500/10 transition-colors"
-                                    title="Delete Task"
-                                  >
-                                    <Trash2 className="w-3.5 h-3.5" />
-                                  </button>
-                                </div>
-                              </div>
-                            </div>
+                            </>
                           );
-                        })}
-
-                        {/* Load More Button */}
-                        {remainingCount > 0 && (
-                          <button
-                            onClick={() => setVisibleCounts({ ...visibleCounts, [col.status]: limit + 5 })}
-                            className="w-full py-2 rounded-xl bg-card hover:bg-card/80 border border-dashed border-border/80 text-muted-foreground hover:text-foreground text-xs font-semibold transition-all cursor-pointer shadow-xs flex items-center justify-center gap-1.5"
-                          >
-                            <span>Load More (+{remainingCount} remaining)</span>
-                          </button>
-                        )}
-                      </>
-                    );
-                  })()
-                )}
+                        })()
+                      )}
+                      {droppableProvided.placeholder}
+                    </div>
+                  )}
+                </Droppable>
               </div>
-            </div>
-          );
-        })}
+            );
+          })}
+        </div>
       </div>
-    </div>
+    </DragDropContext>
   );
 }
+
+
