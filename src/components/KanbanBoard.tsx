@@ -81,6 +81,14 @@ export default function KanbanBoard({
     done: false
   });
 
+  // Column visible item counts for pagination (default 5)
+  const [visibleCounts, setVisibleCounts] = useState<Record<TaskStatus, number>>({
+    not_started: 5,
+    next: 5,
+    in_progress: 5,
+    done: 5
+  });
+
   // Inline Task Edit State
   const [editingTaskId, setEditingTaskId] = useState<string | null>(null);
   const [editingName, setEditingName] = useState<string>('');
@@ -176,7 +184,7 @@ export default function KanbanBoard({
           return (
             <div
               key={col.status}
-              className="glass-panel rounded-2xl border border-border/80 p-3.5 flex flex-col min-h-[500px] bg-card/40 backdrop-blur-md transition-all shadow-sm"
+              className="glass-panel rounded-2xl border border-border/80 p-3.5 flex flex-col min-h-156 bg-card/40 backdrop-blur-md transition-all shadow-sm"
             >
               {/* Column Header */}
               <div className="flex items-center justify-between pb-3 mb-3 border-b border-border/60">
@@ -246,196 +254,216 @@ export default function KanbanBoard({
                 </form>
               )}
 
-              {/* Column Task Cards Stack */}
-              <div className="flex-1 space-y-3 overflow-y-auto pr-0.5">
+              {/* Column Task Cards Stack with Height Limit & Vertical Scroll */}
+              <div className="flex-1 max-h-[540px] overflow-y-auto space-y-3 pr-1">
                 {colTasks.length === 0 ? (
                   <div className="h-32 border-2 border-dashed border-border/40 rounded-xl flex items-center justify-center text-muted-foreground text-xs italic">
                     No tasks
                   </div>
                 ) : (
-                  colTasks.map((task) => {
-                    const proj = projectMap.get(task.projectId);
-                    const priorityCfg = PRIORITY_CONFIG[task.priority || 'medium'];
-                    const pomodoroCount = getTaskPomodoroCount(task.id);
-                    const isExpanded = expandedTaskId === task.id;
+                  (() => {
+                    const limit = visibleCounts[col.status] || 5;
+                    const displayedTasks = colTasks.slice(0, limit);
+                    const remainingCount = colTasks.length - displayedTasks.length;
 
                     return (
-                      <div
-                        key={task.id}
-                        className="group relative rounded-xl bg-card hover:bg-card/90 border border-border/80 p-3 shadow-xs transition-all hover:shadow-md space-y-2.5"
-                      >
-                        {/* Project Badge & Header */}
-                        <div className="flex items-center justify-between gap-2">
-                          <div className="flex items-center gap-1.5 min-w-0">
-                            <span
-                              className="w-2.5 h-2.5 rounded-full shrink-0"
-                              style={{ backgroundColor: proj ? proj.color : '#94a3b8' }}
-                            />
-                            <span className="text-[11px] font-semibold text-muted-foreground truncate">
-                              {proj ? proj.name : 'Uncategorized'}
-                            </span>
-                          </div>
+                      <>
+                        {displayedTasks.map((task) => {
+                          const proj = projectMap.get(task.projectId);
+                          const priorityCfg = PRIORITY_CONFIG[task.priority || 'medium'];
+                          const pomodoroCount = getTaskPomodoroCount(task.id);
+                          const isExpanded = expandedTaskId === task.id;
 
-                          {/* Priority Chip Select */}
-                          <select
-                            value={task.priority || 'medium'}
-                            onChange={(e) => handleUpdatePriority(task, e.target.value as TaskPriority)}
-                            className={cn(
-                              "px-1.5 py-0.5 rounded-md border text-[10px] font-semibold focus:outline-none cursor-pointer shrink-0 transition-colors",
-                              priorityCfg.badgeClass
-                            )}
-                          >
-                            <option value="urgent" className="bg-card text-foreground">Urgent</option>
-                            <option value="high" className="bg-card text-foreground">High</option>
-                            <option value="medium" className="bg-card text-foreground">Medium</option>
-                            <option value="low" className="bg-card text-foreground">Low</option>
-                          </select>
-                        </div>
+                          return (
+                            <div
+                              key={task.id}
+                              className="group relative rounded-xl bg-card hover:bg-card/90 border border-border/80 p-3 shadow-xs transition-all hover:shadow-md space-y-2.5"
+                            >
+                              {/* Project Badge & Header */}
+                              <div className="flex items-center justify-between gap-2">
+                                <div className="flex items-center gap-1.5 min-w-0">
+                                  <span
+                                    className="w-2.5 h-2.5 rounded-full shrink-0"
+                                    style={{ backgroundColor: proj ? proj.color : '#94a3b8' }}
+                                  />
+                                  <span className="text-[11px] font-semibold text-muted-foreground truncate">
+                                    {proj ? proj.name : 'Uncategorized'}
+                                  </span>
+                                </div>
 
-                        {/* Task Title (Inline editable) */}
-                        {editingTaskId === task.id ? (
-                          <div className="flex items-center gap-1">
-                            <input
-                              type="text"
-                              value={editingName}
-                              onChange={(e) => setEditingName(e.target.value)}
-                              className="flex-1 bg-input border border-rose-500 text-foreground text-xs rounded-lg px-2 py-1 focus:outline-none"
-                              autoFocus
-                            />
-                            <button
-                              onClick={() => handleSaveEditing(task.id)}
-                              className="p-1 text-emerald-400 hover:bg-emerald-500/10 rounded-md"
-                            >
-                              <Check className="w-3.5 h-3.5" />
-                            </button>
-                            <button
-                              onClick={() => setEditingTaskId(null)}
-                              className="p-1 text-slate-400 hover:bg-slate-500/10 rounded-md"
-                            >
-                              <X className="w-3.5 h-3.5" />
-                            </button>
-                          </div>
-                        ) : (
-                          <div className="flex items-start justify-between gap-2 group/title">
-                            <h4
-                              onClick={() => handleStartEditing(task)}
-                              className={cn(
-                                "text-xs font-semibold leading-snug text-foreground cursor-pointer hover:text-rose-400 transition-colors break-words flex-1",
-                                task.status === 'done' && "line-through text-muted-foreground"
+                                {/* Priority Chip Select */}
+                                <select
+                                  value={task.priority || 'medium'}
+                                  onChange={(e) => handleUpdatePriority(task, e.target.value as TaskPriority)}
+                                  className={cn(
+                                    "px-1.5 py-0.5 rounded-md border text-[10px] font-semibold focus:outline-none cursor-pointer shrink-0 transition-colors",
+                                    priorityCfg.badgeClass
+                                  )}
+                                >
+                                  <option value="urgent" className="bg-card text-foreground">Urgent</option>
+                                  <option value="high" className="bg-card text-foreground">High</option>
+                                  <option value="medium" className="bg-card text-foreground">Medium</option>
+                                  <option value="low" className="bg-card text-foreground">Low</option>
+                                </select>
+                              </div>
+
+                              {/* Task Title (Inline editable) */}
+                              {editingTaskId === task.id ? (
+                                <div className="flex items-center gap-1">
+                                  <input
+                                    type="text"
+                                    value={editingName}
+                                    onChange={(e) => setEditingName(e.target.value)}
+                                    className="flex-1 bg-input border border-rose-500 text-foreground text-xs rounded-lg px-2 py-1 focus:outline-none"
+                                    autoFocus
+                                  />
+                                  <button
+                                    onClick={() => handleSaveEditing(task.id)}
+                                    className="p-1 text-emerald-400 hover:bg-emerald-500/10 rounded-md"
+                                  >
+                                    <Check className="w-3.5 h-3.5" />
+                                  </button>
+                                  <button
+                                    onClick={() => setEditingTaskId(null)}
+                                    className="p-1 text-slate-400 hover:bg-slate-500/10 rounded-md"
+                                  >
+                                    <X className="w-3.5 h-3.5" />
+                                  </button>
+                                </div>
+                              ) : (
+                                <div className="flex items-start justify-between gap-2 group/title">
+                                  <h4
+                                    onClick={() => handleStartEditing(task)}
+                                    className={cn(
+                                      "text-xs font-semibold leading-snug text-foreground cursor-pointer hover:text-rose-400 transition-colors break-words flex-1",
+                                      task.status === 'done' && "line-through text-muted-foreground"
+                                    )}
+                                    title="Click to edit title"
+                                  >
+                                    {task.name}
+                                  </h4>
+                                  <button
+                                    onClick={() => handleStartEditing(task)}
+                                    className="opacity-0 group-hover/title:opacity-100 p-0.5 text-muted-foreground hover:text-foreground transition-opacity"
+                                  >
+                                    <Edit3 className="w-3 h-3" />
+                                  </button>
+                                </div>
                               )}
-                              title="Click to edit title"
-                            >
-                              {task.name}
-                            </h4>
-                            <button
-                              onClick={() => handleStartEditing(task)}
-                              className="opacity-0 group-hover/title:opacity-100 p-0.5 text-muted-foreground hover:text-foreground transition-opacity"
-                            >
-                              <Edit3 className="w-3 h-3" />
-                            </button>
-                          </div>
-                        )}
 
-                        {/* Task Note / Description Section */}
-                        {task.description && (
-                          <p className="text-[11px] text-muted-foreground/90 bg-muted/50 p-1.5 rounded-lg border border-border/40 line-clamp-2">
-                            {task.description}
-                          </p>
-                        )}
+                              {/* Task Note / Description Section */}
+                              {task.description && (
+                                <p className="text-[11px] text-muted-foreground/90 bg-muted/50 p-1.5 rounded-lg border border-border/40 line-clamp-2">
+                                  {task.description}
+                                </p>
+                              )}
 
-                        {/* Expandable note editor */}
-                        {isExpanded && (
-                          <div className="pt-2 border-t border-border/50 space-y-1.5">
-                            <label className="text-[10px] font-semibold text-muted-foreground block">Task Note / Description</label>
-                            <textarea
-                              value={editingNote}
-                              onChange={(e) => setEditingNote(e.target.value)}
-                              placeholder="Add task notes or context..."
-                              rows={2}
-                              className="w-full bg-input border border-border focus:border-indigo-500 text-foreground text-xs rounded-lg p-2 focus:outline-none resize-none"
-                            />
-                            <div className="flex justify-end gap-1">
-                              <button
-                                onClick={() => setExpandedTaskId(null)}
-                                className="px-2 py-0.5 text-[10px] text-muted-foreground hover:text-foreground"
-                              >
-                                Cancel
-                              </button>
-                              <button
-                                onClick={() => {
-                                  handleSaveNote(task.id);
-                                  setExpandedTaskId(null);
-                                }}
-                                className="px-2 py-0.5 text-[10px] font-semibold bg-rose-500 text-white rounded-md hover:bg-rose-600"
-                              >
-                                Save Note
-                              </button>
+                              {/* Expandable note editor */}
+                              {isExpanded && (
+                                <div className="pt-2 border-t border-border/50 space-y-1.5">
+                                  <label className="text-[10px] font-semibold text-muted-foreground block">Task Note / Description</label>
+                                  <textarea
+                                    value={editingNote}
+                                    onChange={(e) => setEditingNote(e.target.value)}
+                                    placeholder="Add task notes or context..."
+                                    rows={2}
+                                    className="w-full bg-input border border-border focus:border-indigo-500 text-foreground text-xs rounded-lg p-2 focus:outline-none resize-none"
+                                  />
+                                  <div className="flex justify-end gap-1">
+                                    <button
+                                      onClick={() => setExpandedTaskId(null)}
+                                      className="px-2 py-0.5 text-[10px] text-muted-foreground hover:text-foreground"
+                                    >
+                                      Cancel
+                                    </button>
+                                    <button
+                                      onClick={() => {
+                                        handleSaveNote(task.id);
+                                        setExpandedTaskId(null);
+                                      }}
+                                      className="px-2 py-0.5 text-[10px] font-semibold bg-rose-500 text-white rounded-md hover:bg-rose-600"
+                                    >
+                                      Save Note
+                                    </button>
+                                  </div>
+                                </div>
+                              )}
+
+                              {/* Footer Details: Sessions Counter, Move Buttons, Start Focus */}
+                              <div className="flex items-center justify-between pt-2 border-t border-border/40 gap-1 text-[11px]">
+                                {/* Pomodoro Session Badge */}
+                                <div
+                                  className="flex items-center gap-1 text-muted-foreground font-medium cursor-pointer hover:text-foreground"
+                                  onClick={() => {
+                                    setExpandedTaskId(isExpanded ? null : task.id);
+                                    setEditingNote(task.description || '');
+                                  }}
+                                  title="Click to view/edit notes"
+                                >
+                                  <Clock className="w-3 h-3 text-rose-400" />
+                                  <span>{pomodoroCount} {pomodoroCount === 1 ? 'session' : 'sessions'}</span>
+                                  {isExpanded ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
+                                </div>
+
+                                {/* Quick Actions */}
+                                <div className="flex items-center gap-1">
+                                  {/* Move Status Buttons */}
+                                  {col.status !== 'done' && (
+                                    <button
+                                      onClick={() => {
+                                        const nextMap: Record<TaskStatus, TaskStatus> = {
+                                          not_started: 'next',
+                                          next: 'in_progress',
+                                          in_progress: 'done',
+                                          done: 'not_started'
+                                        };
+                                        handleMoveTaskStatus(task, nextMap[col.status]);
+                                      }}
+                                      className="p-1 rounded-md text-muted-foreground hover:text-indigo-400 hover:bg-indigo-500/10 transition-colors"
+                                      title="Move to next status stage"
+                                    >
+                                      <ArrowRightCircle className="w-3.5 h-3.5" />
+                                    </button>
+                                  )}
+
+                                  {/* Direct Start Focus Launcher */}
+                                  {onStartTaskFocus && col.status !== 'done' && (
+                                    <button
+                                      onClick={() => onStartTaskFocus(task.projectId, task.id)}
+                                      className="flex items-center gap-1 bg-rose-500/15 hover:bg-rose-500 border border-rose-500/30 hover:border-rose-500 text-rose-400 hover:text-white px-2 py-0.5 rounded-lg text-[10px] font-semibold transition-all shadow-xs cursor-pointer"
+                                      title="Start Pomodoro Focus Session for this task"
+                                    >
+                                      <Play className="w-2.5 h-2.5 fill-current" />
+                                      <span>Focus</span>
+                                    </button>
+                                  )}
+
+                                  {/* Delete Button */}
+                                  <button
+                                    onClick={() => handleDeleteTask(task.id)}
+                                    className="p-1 rounded-md text-muted-foreground hover:text-rose-400 hover:bg-rose-500/10 transition-colors"
+                                    title="Delete Task"
+                                  >
+                                    <Trash2 className="w-3.5 h-3.5" />
+                                  </button>
+                                </div>
+                              </div>
                             </div>
-                          </div>
-                        )}
+                          );
+                        })}
 
-                        {/* Footer Details: Sessions Counter, Move Buttons, Start Focus */}
-                        <div className="flex items-center justify-between pt-2 border-t border-border/40 gap-1 text-[11px]">
-                          {/* Pomodoro Session Badge */}
-                          <div
-                            className="flex items-center gap-1 text-muted-foreground font-medium cursor-pointer hover:text-foreground"
-                            onClick={() => {
-                              setExpandedTaskId(isExpanded ? null : task.id);
-                              setEditingNote(task.description || '');
-                            }}
-                            title="Click to view/edit notes"
+                        {/* Load More Button */}
+                        {remainingCount > 0 && (
+                          <button
+                            onClick={() => setVisibleCounts({ ...visibleCounts, [col.status]: limit + 5 })}
+                            className="w-full py-2 rounded-xl bg-card hover:bg-card/80 border border-dashed border-border/80 text-muted-foreground hover:text-foreground text-xs font-semibold transition-all cursor-pointer shadow-xs flex items-center justify-center gap-1.5"
                           >
-                            <Clock className="w-3 h-3 text-rose-400" />
-                            <span>{pomodoroCount} {pomodoroCount === 1 ? 'session' : 'sessions'}</span>
-                            {isExpanded ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
-                          </div>
-
-                          {/* Quick Actions */}
-                          <div className="flex items-center gap-1">
-                            {/* Move Status Buttons */}
-                            {col.status !== 'done' && (
-                              <button
-                                onClick={() => {
-                                  const nextMap: Record<TaskStatus, TaskStatus> = {
-                                    not_started: 'next',
-                                    next: 'in_progress',
-                                    in_progress: 'done',
-                                    done: 'not_started'
-                                  };
-                                  handleMoveTaskStatus(task, nextMap[col.status]);
-                                }}
-                                className="p-1 rounded-md text-muted-foreground hover:text-indigo-400 hover:bg-indigo-500/10 transition-colors"
-                                title="Move to next status stage"
-                              >
-                                <ArrowRightCircle className="w-3.5 h-3.5" />
-                              </button>
-                            )}
-
-                            {/* Direct Start Focus Launcher */}
-                            {onStartTaskFocus && col.status !== 'done' && (
-                              <button
-                                onClick={() => onStartTaskFocus(task.projectId, task.id)}
-                                className="flex items-center gap-1 bg-rose-500/15 hover:bg-rose-500 border border-rose-500/30 hover:border-rose-500 text-rose-400 hover:text-white px-2 py-0.5 rounded-lg text-[10px] font-semibold transition-all shadow-xs cursor-pointer"
-                                title="Start Pomodoro Focus Session for this task"
-                              >
-                                <Play className="w-2.5 h-2.5 fill-current" />
-                                <span>Focus</span>
-                              </button>
-                            )}
-
-                            {/* Delete Button */}
-                            <button
-                              onClick={() => handleDeleteTask(task.id)}
-                              className="p-1 rounded-md text-muted-foreground hover:text-rose-400 hover:bg-rose-500/10 transition-colors"
-                              title="Delete Task"
-                            >
-                              <Trash2 className="w-3.5 h-3.5" />
-                            </button>
-                          </div>
-                        </div>
-                      </div>
+                            <span>Load More (+{remainingCount} remaining)</span>
+                          </button>
+                        )}
+                      </>
                     );
-                  })
+                  })()
                 )}
               </div>
             </div>

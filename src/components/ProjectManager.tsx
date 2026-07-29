@@ -135,6 +135,9 @@ export default function ProjectManager({
   // Sort state per project in list view
   const [sortBy, setSortBy] = useState<Record<string, 'priority' | 'status' | 'date'>>({});
 
+  // Visible task limit for pagination in list view (default 5)
+  const [visibleListTaskCounts, setVisibleListTaskCounts] = useState<Record<string, number>>({});
+
   const handleAddProject = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newProjectName.trim()) return;
@@ -564,139 +567,159 @@ export default function ProjectManager({
                           </div>
                         </div>
 
-                        {/* Tasks Rows */}
-                        <div className="space-y-2">
+                        {/* Tasks Rows with Height Limit & Vertical Scroll */}
+                        <div className="max-h-[420px] overflow-y-auto space-y-2 pr-1">
                           {sortedTasks.length === 0 ? (
                             <p className="text-xs text-muted-foreground italic py-2 text-center">
                               No tasks match the selected criteria.
                             </p>
                           ) : (
-                            sortedTasks.map((task) => {
-                              const statusCfg = STATUS_CONFIG[task.status || 'not_started'] || STATUS_CONFIG.not_started;
-                              const priorityCfg = PRIORITY_CONFIG[task.priority || 'medium'] || PRIORITY_CONFIG.medium;
-                              const StatusIcon = statusCfg.icon;
+                            (() => {
+                              const limit = visibleListTaskCounts[proj.id] || 5;
+                              const displayedTasks = sortedTasks.slice(0, limit);
+                              const remainingCount = sortedTasks.length - displayedTasks.length;
 
                               return (
-                                <div
-                                  key={task.id}
-                                  className="flex flex-col sm:flex-row sm:items-center justify-between p-3 rounded-xl bg-card hover:bg-card/90 border border-border gap-2 transition-all group"
-                                >
-                                  <div className="flex items-center gap-3 flex-1 min-w-0">
-                                    {/* Quick Toggle Status Icon */}
-                                    <button
-                                      onClick={() => {
-                                        const nextStatusMap: Record<TaskStatus, TaskStatus> = {
-                                          not_started: 'next',
-                                          next: 'in_progress',
-                                          in_progress: 'done',
-                                          done: 'not_started'
-                                        };
-                                        handleUpdateStatus(task, nextStatusMap[task.status || 'not_started']);
-                                      }}
-                                      className="cursor-pointer shrink-0 transition-transform hover:scale-110"
-                                      title={`Status: ${statusCfg.label} (Click to cycle)`}
-                                    >
-                                      <StatusIcon className={cn("w-4 h-4", statusCfg.colorClass)} />
-                                    </button>
+                                <>
+                                  {displayedTasks.map((task) => {
+                                    const statusCfg = STATUS_CONFIG[task.status || 'not_started'] || STATUS_CONFIG.not_started;
+                                    const priorityCfg = PRIORITY_CONFIG[task.priority || 'medium'] || PRIORITY_CONFIG.medium;
+                                    const StatusIcon = statusCfg.icon;
 
-                                    {/* Inline Editable Task Name */}
-                                    {editingTaskId === task.id ? (
-                                      <div className="flex items-center gap-1 flex-1">
-                                        <input
-                                          type="text"
-                                          value={editingTaskName}
-                                          onChange={(e) => setEditingTaskName(e.target.value)}
-                                          className="flex-1 bg-input border border-rose-500 text-foreground text-xs rounded-lg px-2 py-1 focus:outline-none"
-                                          autoFocus
-                                        />
-                                        <button
-                                          onClick={() => handleSaveInlineTitle(task.id)}
-                                          className="p-1 text-emerald-400 hover:bg-emerald-500/10 rounded-md"
-                                        >
-                                          <Check className="w-3.5 h-3.5" />
-                                        </button>
-                                        <button
-                                          onClick={() => setEditingTaskId(null)}
-                                          className="p-1 text-slate-400 hover:bg-slate-500/10 rounded-md"
-                                        >
-                                          <X className="w-3.5 h-3.5" />
-                                        </button>
+                                    return (
+                                      <div
+                                        key={task.id}
+                                        className="flex flex-col sm:flex-row sm:items-center justify-between p-3 rounded-xl bg-card hover:bg-card/90 border border-border gap-2 transition-all group"
+                                      >
+                                        <div className="flex items-center gap-3 flex-1 min-w-0">
+                                          {/* Quick Toggle Status Icon */}
+                                          <button
+                                            onClick={() => {
+                                              const nextStatusMap: Record<TaskStatus, TaskStatus> = {
+                                                not_started: 'next',
+                                                next: 'in_progress',
+                                                in_progress: 'done',
+                                                done: 'not_started'
+                                              };
+                                              handleUpdateStatus(task, nextStatusMap[task.status || 'not_started']);
+                                            }}
+                                            className="cursor-pointer shrink-0 transition-transform hover:scale-110"
+                                            title={`Status: ${statusCfg.label} (Click to cycle)`}
+                                          >
+                                            <StatusIcon className={cn("w-4 h-4", statusCfg.colorClass)} />
+                                          </button>
+
+                                          {/* Inline Editable Task Name */}
+                                          {editingTaskId === task.id ? (
+                                            <div className="flex items-center gap-1 flex-1">
+                                              <input
+                                                type="text"
+                                                value={editingTaskName}
+                                                onChange={(e) => setEditingTaskName(e.target.value)}
+                                                className="flex-1 bg-input border border-rose-500 text-foreground text-xs rounded-lg px-2 py-1 focus:outline-none"
+                                                autoFocus
+                                              />
+                                              <button
+                                                onClick={() => handleSaveInlineTitle(task.id)}
+                                                className="p-1 text-emerald-400 hover:bg-emerald-500/10 rounded-md"
+                                              >
+                                                <Check className="w-3.5 h-3.5" />
+                                              </button>
+                                              <button
+                                                onClick={() => setEditingTaskId(null)}
+                                                className="p-1 text-slate-400 hover:bg-slate-500/10 rounded-md"
+                                              >
+                                                <X className="w-3.5 h-3.5" />
+                                              </button>
+                                            </div>
+                                          ) : (
+                                            <span
+                                              onClick={() => {
+                                                setEditingTaskId(task.id);
+                                                setEditingTaskName(task.name);
+                                              }}
+                                              className={cn(
+                                                "text-sm font-medium transition-colors break-words flex-1 cursor-pointer hover:text-rose-400",
+                                                task.status === 'done' ? "line-through text-muted-foreground" : "text-foreground"
+                                              )}
+                                              title="Click to edit title"
+                                            >
+                                              {task.name}
+                                            </span>
+                                          )}
+                                        </div>
+
+                                        {/* Badges & Actions */}
+                                        <div className="flex items-center gap-2 shrink-0 ml-7 sm:ml-0">
+                                          {/* Direct Focus Launcher Button */}
+                                          {onStartTaskFocus && task.status !== 'done' && (
+                                            <button
+                                              onClick={() => onStartTaskFocus(proj.id, task.id)}
+                                              className="flex items-center gap-1 bg-rose-500/15 hover:bg-rose-500 border border-rose-500/30 hover:border-rose-500 text-rose-400 hover:text-white px-2 py-0.5 rounded-lg text-[11px] font-semibold transition-all cursor-pointer shadow-xs"
+                                              title="Start Focus Session"
+                                            >
+                                              <Play className="w-3 h-3 fill-current" />
+                                              <span>Focus</span>
+                                            </button>
+                                          )}
+
+                                          {/* Priority Dropdown Selector */}
+                                          <select
+                                            value={task.priority || 'medium'}
+                                            onChange={(e) => handleUpdatePriority(task, e.target.value as TaskPriority)}
+                                            className={cn(
+                                              "px-2 py-0.5 rounded-lg border text-[11px] font-medium focus:outline-none cursor-pointer transition-colors",
+                                              priorityCfg.badgeClass
+                                            )}
+                                            title="Change Priority"
+                                          >
+                                            <option value="urgent" className="bg-card text-foreground">Urgent</option>
+                                            <option value="high" className="bg-card text-foreground">High</option>
+                                            <option value="medium" className="bg-card text-foreground">Medium</option>
+                                            <option value="low" className="bg-card text-foreground">Low</option>
+                                          </select>
+
+                                          {/* Status Dropdown Selector */}
+                                          <select
+                                            value={task.status || 'not_started'}
+                                            onChange={(e) => handleUpdateStatus(task, e.target.value as TaskStatus)}
+                                            className={cn(
+                                              "px-2 py-0.5 rounded-lg border text-[11px] font-medium focus:outline-none cursor-pointer transition-colors",
+                                              statusCfg.badgeClass
+                                            )}
+                                            title="Change Status"
+                                          >
+                                            <option value="not_started" className="bg-card text-foreground">Not Started</option>
+                                            <option value="next" className="bg-card text-foreground">Next</option>
+                                            <option value="in_progress" className="bg-card text-foreground">In Progress</option>
+                                            <option value="done" className="bg-card text-foreground">Done</option>
+                                          </select>
+
+                                          {/* Delete Task Button */}
+                                          <button
+                                            onClick={() => handleDeleteTask(task.id)}
+                                            className="p-1 text-muted-foreground hover:text-rose-400 transition-colors opacity-80 sm:opacity-0 sm:group-hover:opacity-100"
+                                            title="Delete Task"
+                                          >
+                                            <Trash2 className="w-3.5 h-3.5" />
+                                          </button>
+                                        </div>
                                       </div>
-                                    ) : (
-                                      <span
-                                        onClick={() => {
-                                          setEditingTaskId(task.id);
-                                          setEditingTaskName(task.name);
-                                        }}
-                                        className={cn(
-                                          "text-sm font-medium transition-colors break-words flex-1 cursor-pointer hover:text-rose-400",
-                                          task.status === 'done' ? "line-through text-muted-foreground" : "text-foreground"
-                                        )}
-                                        title="Click to edit title"
-                                      >
-                                        {task.name}
-                                      </span>
-                                    )}
-                                  </div>
+                                    );
+                                  })}
 
-                                  {/* Badges & Actions */}
-                                  <div className="flex items-center gap-2 shrink-0 ml-7 sm:ml-0">
-                                    {/* Direct Focus Launcher Button */}
-                                    {onStartTaskFocus && task.status !== 'done' && (
-                                      <button
-                                        onClick={() => onStartTaskFocus(proj.id, task.id)}
-                                        className="flex items-center gap-1 bg-rose-500/15 hover:bg-rose-500 border border-rose-500/30 hover:border-rose-500 text-rose-400 hover:text-white px-2 py-0.5 rounded-lg text-[11px] font-semibold transition-all cursor-pointer shadow-xs"
-                                        title="Start Focus Session"
-                                      >
-                                        <Play className="w-3 h-3 fill-current" />
-                                        <span>Focus</span>
-                                      </button>
-                                    )}
-
-                                    {/* Priority Dropdown Selector */}
-                                    <select
-                                      value={task.priority || 'medium'}
-                                      onChange={(e) => handleUpdatePriority(task, e.target.value as TaskPriority)}
-                                      className={cn(
-                                        "px-2 py-0.5 rounded-lg border text-[11px] font-medium focus:outline-none cursor-pointer transition-colors",
-                                        priorityCfg.badgeClass
-                                      )}
-                                      title="Change Priority"
-                                    >
-                                      <option value="urgent" className="bg-card text-foreground">Urgent</option>
-                                      <option value="high" className="bg-card text-foreground">High</option>
-                                      <option value="medium" className="bg-card text-foreground">Medium</option>
-                                      <option value="low" className="bg-card text-foreground">Low</option>
-                                    </select>
-
-                                    {/* Status Dropdown Selector */}
-                                    <select
-                                      value={task.status || 'not_started'}
-                                      onChange={(e) => handleUpdateStatus(task, e.target.value as TaskStatus)}
-                                      className={cn(
-                                        "px-2 py-0.5 rounded-lg border text-[11px] font-medium focus:outline-none cursor-pointer transition-colors",
-                                        statusCfg.badgeClass
-                                      )}
-                                      title="Change Status"
-                                    >
-                                      <option value="not_started" className="bg-card text-foreground">Not Started</option>
-                                      <option value="next" className="bg-card text-foreground">Next</option>
-                                      <option value="in_progress" className="bg-card text-foreground">In Progress</option>
-                                      <option value="done" className="bg-card text-foreground">Done</option>
-                                    </select>
-
-                                    {/* Delete Task Button */}
+                                  {/* Load More Button */}
+                                  {remainingCount > 0 && (
                                     <button
-                                      onClick={() => handleDeleteTask(task.id)}
-                                      className="p-1 text-muted-foreground hover:text-rose-400 transition-colors opacity-80 sm:opacity-0 sm:group-hover:opacity-100"
-                                      title="Delete Task"
+                                      onClick={() => setVisibleListTaskCounts({ ...visibleListTaskCounts, [proj.id]: limit + 5 })}
+                                      className="w-full py-2 rounded-xl bg-card hover:bg-card/80 border border-dashed border-border/80 text-muted-foreground hover:text-foreground text-xs font-semibold transition-all cursor-pointer shadow-xs flex items-center justify-center gap-1.5"
                                     >
-                                      <Trash2 className="w-3.5 h-3.5" />
+                                      <span>Load More (+{remainingCount} remaining)</span>
                                     </button>
-                                  </div>
-                                </div>
+                                  )}
+                                </>
                               );
-                            })
+                            })()
                           )}
                         </div>
 
