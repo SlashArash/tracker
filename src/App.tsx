@@ -59,6 +59,19 @@ export default function App() {
     loadAppData();
   }, []);
 
+  useEffect(() => {
+    if (settings?.theme) {
+      const root = document.documentElement;
+      if (settings.theme === 'dark') {
+        root.classList.add('dark');
+        root.classList.remove('light');
+      } else {
+        root.classList.add('light');
+        root.classList.remove('dark');
+      }
+    }
+  }, [settings?.theme]);
+
   const handleUnlock = (passcode: string) => {
     setActivePasscode(passcode);
     setIsLocked(false);
@@ -93,8 +106,8 @@ export default function App() {
 
   return (
     <div className={cn(
-      "min-h-screen flex flex-col font-sans selection:bg-rose-500 selection:text-white transition-colors duration-300",
-      isLight ? "light bg-slate-100 text-slate-800" : "dark bg-[#090d16] text-slate-100"
+      "min-h-screen flex flex-col font-sans selection:bg-primary selection:text-primary-foreground transition-colors duration-300 bg-background text-foreground",
+      isLight ? "light" : "dark"
     )}>
       {/* Passcode Lock Overlay */}
       {isLocked && (
@@ -115,10 +128,7 @@ export default function App() {
       )}
 
       {/* Top Header Navbar */}
-      <header className={cn(
-        "sticky top-0 z-40 backdrop-blur-xl border-b transition-colors px-4 py-3",
-        isLight ? "bg-white/80 border-slate-200 shadow-sm" : "bg-slate-950/80 border-slate-800/80"
-      )}>
+      <header className="sticky top-0 z-40 backdrop-blur-xl border-b border-border bg-background/80 transition-colors px-4 py-3 shadow-xs">
         <div className="max-w-6xl mx-auto flex items-center justify-between">
           {/* Logo & Title */}
           <div className="flex items-center gap-3">
@@ -127,12 +137,12 @@ export default function App() {
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <h1 className={cn("text-lg font-extrabold tracking-tight font-heading", isLight ? "text-slate-900" : "text-white")}>Gojodoro</h1>
+                <h1 className="text-lg font-extrabold tracking-tight font-heading text-foreground">Gojodoro</h1>
                 <span className="text-[10px] font-semibold bg-rose-500/10 text-rose-500 border border-rose-500/20 px-2 py-0.5 rounded-full">
                   Offline-First
                 </span>
               </div>
-              <p className={cn("text-[11px]", isLight ? "text-slate-500" : "text-slate-400")}>Pomodoro Project Time Tracker</p>
+              <p className="text-[11px] text-muted-foreground">Pomodoro Project Time Tracker</p>
             </div>
           </div>
 
@@ -141,10 +151,7 @@ export default function App() {
             {/* Quick Theme Toggle Header Button */}
             <button
               onClick={handleToggleTheme}
-              className={cn(
-                "p-2 rounded-xl border transition-colors flex items-center gap-1.5 text-xs font-medium cursor-pointer",
-                isLight ? "bg-slate-100 border-slate-300 text-slate-700 hover:bg-slate-200" : "bg-slate-900/80 border-slate-800 text-slate-300 hover:bg-slate-800"
-              )}
+              className="p-2 rounded-xl border border-border bg-card text-card-foreground hover:bg-accent transition-colors flex items-center gap-1.5 text-xs font-medium cursor-pointer"
               title={`Switch to ${isLight ? 'Dark' : 'Light'} Mode`}
             >
               {isLight ? <Moon className="w-4 h-4 text-indigo-600" /> : <Sun className="w-4 h-4 text-amber-400" />}
@@ -153,10 +160,7 @@ export default function App() {
 
             <button
               onClick={() => setIsBackupOpen(true)}
-              className={cn(
-                "p-2 rounded-xl border transition-colors flex items-center gap-1.5 text-xs font-medium cursor-pointer",
-                isLight ? "bg-slate-100 border-slate-300 text-slate-700 hover:bg-slate-200" : "bg-slate-900/80 border-slate-800 text-slate-400 hover:text-white hover:bg-slate-800"
-              )}
+              className="p-2 rounded-xl border border-border bg-card text-card-foreground hover:bg-accent transition-colors flex items-center gap-1.5 text-xs font-medium cursor-pointer"
               title="Import / Export Data"
             >
               <FileJson className="w-4 h-4 text-indigo-500" />
@@ -165,23 +169,17 @@ export default function App() {
 
             <button
               onClick={() => setIsSettingsOpen(true)}
-              className={cn(
-                "p-2 rounded-xl border transition-colors flex items-center gap-1.5 text-xs font-medium cursor-pointer",
-                isLight ? "bg-slate-100 border-slate-300 text-slate-700 hover:bg-slate-200" : "bg-slate-900/80 border-slate-800 text-slate-400 hover:text-white hover:bg-slate-800"
-              )}
+              className="p-2 rounded-xl border border-border bg-card text-card-foreground hover:bg-accent transition-colors flex items-center gap-1.5 text-xs font-medium cursor-pointer"
               title="Preferences"
             >
-              <SettingsIcon className="w-4 h-4 text-slate-500 dark:text-slate-300" />
+              <SettingsIcon className="w-4 h-4 text-muted-foreground" />
               <span className="hidden sm:inline">Settings</span>
             </button>
 
             {settings.isPasscodeEnabled && (
               <button
                 onClick={() => setIsLocked(true)}
-                className={cn(
-                  "p-2 rounded-xl border transition-colors cursor-pointer",
-                  isLight ? "bg-slate-100 border-slate-300 text-slate-700 hover:text-rose-600 hover:bg-slate-200" : "bg-slate-900/80 border-slate-800 text-slate-400 hover:text-rose-400 hover:bg-slate-800"
-                )}
+                className="p-2 rounded-xl border border-border bg-card text-card-foreground hover:text-rose-500 hover:bg-accent transition-colors cursor-pointer"
                 title="Lock Workspace"
               >
                 <Lock className="w-4 h-4" />
@@ -195,19 +193,14 @@ export default function App() {
       <main className="flex-1 max-w-6xl w-full mx-auto p-4 md:p-6 pb-24">
         {/* Navigation Tabs */}
         <div className="flex items-center justify-center mb-8">
-          <div className={cn(
-            "flex items-center gap-1 p-1.5 rounded-2xl border shadow-xl transition-colors",
-            isLight ? "bg-white border-slate-200 shadow-slate-200/50" : "bg-slate-900/90 border-slate-800"
-          )}>
+          <div className="flex items-center gap-1 p-1.5 rounded-2xl border border-border bg-card shadow-xl transition-colors">
             <button
               onClick={() => setActiveTab('timer')}
               className={cn(
                 "flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-semibold transition-all cursor-pointer",
                 activeTab === 'timer'
                   ? "bg-rose-500 text-white shadow-lg shadow-rose-500/25"
-                  : isLight
-                    ? "text-slate-600 hover:text-slate-900 hover:bg-slate-100"
-                    : "text-slate-400 hover:text-white hover:bg-slate-800/50"
+                  : "text-muted-foreground hover:text-foreground hover:bg-accent"
               )}
             >
               <TimerIcon className="w-4 h-4" />
@@ -220,18 +213,13 @@ export default function App() {
                 "flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-semibold transition-all cursor-pointer",
                 activeTab === 'projects'
                   ? "bg-rose-500 text-white shadow-lg shadow-rose-500/25"
-                  : isLight
-                    ? "text-slate-600 hover:text-slate-900 hover:bg-slate-100"
-                    : "text-slate-400 hover:text-white hover:bg-slate-800/50"
+                  : "text-muted-foreground hover:text-foreground hover:bg-accent"
               )}
             >
               <FolderGit2 className="w-4 h-4" />
               <span>Projects & Tasks</span>
               {projects.length > 0 && (
-                <span className={cn(
-                  "ml-1 px-1.5 py-0.5 rounded-full text-[10px]",
-                  isLight ? "bg-slate-200 text-slate-700" : "bg-slate-800 text-slate-300"
-                )}>
+                <span className="ml-1 px-1.5 py-0.5 rounded-full text-[10px] bg-muted text-muted-foreground">
                   {projects.length}
                 </span>
               )}
@@ -243,9 +231,7 @@ export default function App() {
                 "flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-semibold transition-all cursor-pointer",
                 activeTab === 'history'
                   ? "bg-rose-500 text-white shadow-lg shadow-rose-500/25"
-                  : isLight
-                    ? "text-slate-600 hover:text-slate-900 hover:bg-slate-100"
-                    : "text-slate-400 hover:text-white hover:bg-slate-800/50"
+                  : "text-muted-foreground hover:text-foreground hover:bg-accent"
               )}
             >
               <History className="w-4 h-4" />

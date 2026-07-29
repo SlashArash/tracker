@@ -1,5 +1,27 @@
 @import "tailwindcss";
 
+@theme {
+  --color-background: hsl(var(--background));
+  --color-foreground: hsl(var(--foreground));
+  --color-card: hsl(var(--card));
+  --color-card-foreground: hsl(var(--card-foreground));
+  --color-popover: hsl(var(--popover));
+  --color-popover-foreground: hsl(var(--popover-foreground));
+  --color-primary: hsl(var(--primary));
+  --color-primary-foreground: hsl(var(--primary-foreground));
+  --color-secondary: hsl(var(--secondary));
+  --color-secondary-foreground: hsl(var(--secondary-foreground));
+  --color-muted: hsl(var(--muted));
+  --color-muted-foreground: hsl(var(--muted-foreground));
+  --color-accent: hsl(var(--accent));
+  --color-accent-foreground: hsl(var(--accent-foreground));
+  --color-destructive: hsl(var(--destructive));
+  --color-destructive-foreground: hsl(var(--destructive-foreground));
+  --color-border: hsl(var(--border));
+  --color-input: hsl(var(--input));
+  --color-ring: hsl(var(--ring));
+}
+
 @layer base {
   :root {
     --background: 210 40% 98%;
@@ -83,7 +105,11 @@
     color: hsl(var(--foreground));
   }
 
-  h1, h2, h3, h4, .font-heading {
+  h1,
+  h2,
+  h3,
+  h4,
+  .font-heading {
     font-family: 'Outfit', sans-serif;
   }
 
@@ -121,9 +147,12 @@
 
 /* Pulsing Timer Glow */
 @keyframes timerPulse {
-  0%, 100% {
+
+  0%,
+  100% {
     box-shadow: 0 0 25px rgba(244, 63, 94, 0.25), inset 0 0 25px rgba(244, 63, 94, 0.15);
   }
+
   50% {
     box-shadow: 0 0 45px rgba(244, 63, 94, 0.45), inset 0 0 35px rgba(244, 63, 94, 0.3);
   }
@@ -134,9 +163,12 @@
 }
 
 @keyframes breakPulse {
-  0%, 100% {
+
+  0%,
+  100% {
     box-shadow: 0 0 25px rgba(16, 185, 129, 0.25), inset 0 0 25px rgba(16, 185, 129, 0.15);
   }
+
   50% {
     box-shadow: 0 0 45px rgba(16, 185, 129, 0.45), inset 0 0 35px rgba(16, 185, 129, 0.3);
   }

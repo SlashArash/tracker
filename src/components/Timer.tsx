@@ -179,19 +179,14 @@ export default function Timer({
   return (
     <div className="flex flex-col items-center justify-center w-full max-w-xl mx-auto py-4">
       {/* Mode Switcher Tabs */}
-      <div className={cn(
-        "flex items-center gap-1.5 p-1.5 rounded-2xl border shadow-lg mb-8 transition-colors",
-        isLight ? 'bg-white border-slate-200/80 shadow-slate-200/50' : 'bg-slate-900/90 border-slate-800'
-      )}>
+      <div className="flex items-center gap-1.5 p-1.5 rounded-2xl border border-border bg-card shadow-lg mb-8 transition-colors">
         <button
           onClick={() => { setIsRunning(false); setMode('work'); setTimeLeft(settings.workDuration * 60); }}
           className={cn(
             "flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold transition-all cursor-pointer",
             mode === 'work'
-              ? 'bg-rose-500 text-white shadow-lg shadow-rose-500/25'
-              : isLight
-                ? 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
-                : 'text-slate-400 hover:text-white hover:bg-slate-800/50'
+              ? "bg-rose-500 text-white shadow-lg shadow-rose-500/25"
+              : "text-muted-foreground hover:text-foreground hover:bg-accent"
           )}
         >
           <Flame className="w-3.5 h-3.5" />
@@ -203,10 +198,8 @@ export default function Timer({
           className={cn(
             "flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold transition-all cursor-pointer",
             mode === 'shortBreak'
-              ? 'bg-emerald-500 text-white shadow-lg shadow-emerald-500/25'
-              : isLight
-                ? 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
-                : 'text-slate-400 hover:text-white hover:bg-slate-800/50'
+              ? "bg-emerald-500 text-white shadow-lg shadow-emerald-500/25"
+              : "text-muted-foreground hover:text-foreground hover:bg-accent"
           )}
         >
           <Coffee className="w-3.5 h-3.5" />
@@ -218,10 +211,8 @@ export default function Timer({
           className={cn(
             "flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold transition-all cursor-pointer",
             mode === 'longBreak'
-              ? 'bg-indigo-500 text-white shadow-lg shadow-indigo-500/25'
-              : isLight
-                ? 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
-                : 'text-slate-400 hover:text-white hover:bg-slate-800/50'
+              ? "bg-indigo-500 text-white shadow-lg shadow-indigo-500/25"
+              : "text-muted-foreground hover:text-foreground hover:bg-accent"
           )}
         >
           <Sparkles className="w-3.5 h-3.5" />
@@ -233,10 +224,8 @@ export default function Timer({
           className={cn(
             "flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold transition-all cursor-pointer",
             mode === 'stopwatch'
-              ? 'bg-amber-500 text-white shadow-lg shadow-amber-500/25'
-              : isLight
-                ? 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
-                : 'text-slate-400 hover:text-white hover:bg-slate-800/50'
+              ? "bg-amber-500 text-white shadow-lg shadow-amber-500/25"
+              : "text-muted-foreground hover:text-foreground hover:bg-accent"
           )}
         >
           <RotateCcw className="w-3.5 h-3.5" />
@@ -245,16 +234,14 @@ export default function Timer({
       </div>
 
       {/* Task & Project Selector Card */}
-      <div className={`w-full glass-panel rounded-2xl p-4 mb-8 flex flex-col md:flex-row items-center justify-between gap-3 border transition-colors ${isLight ? 'bg-white/90 border-slate-200 shadow-slate-200/40' : 'border-slate-800'
-        }`}>
+      <div className="w-full glass-panel rounded-2xl p-4 mb-8 flex flex-col md:flex-row items-center justify-between gap-3 border border-border">
         <div className="flex items-center gap-3 w-full md:w-auto">
           <div
             className="w-4 h-4 rounded-full shrink-0 shadow-sm"
-            style={{ backgroundColor: selectedProject ? selectedProject.color : (isLight ? '#64748b' : '#94a3b8') }}
+            style={{ backgroundColor: selectedProject ? selectedProject.color : 'hsl(var(--muted-foreground))' }}
           />
           <div className="flex flex-col text-left w-full">
-            <span className={`text-[10px] uppercase font-bold tracking-wider ${isLight ? 'text-slate-500' : 'text-slate-400'
-              }`}>Assigned Task</span>
+            <span className="text-[10px] uppercase font-bold tracking-wider text-muted-foreground">Assigned Task</span>
             <div className="flex items-center gap-2">
               <select
                 value={selectedProjectId}
@@ -262,31 +249,29 @@ export default function Timer({
                   setSelectedProjectId(e.target.value);
                   setSelectedTaskId('');
                 }}
-                className={`bg-transparent text-sm font-semibold focus:outline-none cursor-pointer border-b border-transparent hover:border-slate-400 transition-colors ${isLight ? 'text-slate-900' : 'text-slate-200'
-                  }`}
+                className="bg-transparent text-sm font-semibold focus:outline-none cursor-pointer border-b border-transparent hover:border-border transition-colors text-foreground"
               >
-                <option value="" className={isLight ? 'bg-white text-slate-800' : 'bg-slate-900 text-slate-300'}>Uncategorized</option>
+                <option value="" className="bg-card text-card-foreground">Uncategorized</option>
                 {projects.map((p) => (
-                  <option key={p.id} value={p.id} className={isLight ? 'bg-white text-slate-900' : 'bg-slate-900 text-slate-100'}>
+                  <option key={p.id} value={p.id} className="bg-card text-card-foreground">
                     {p.name}
                   </option>
                 ))}
               </select>
 
               {selectedProjectId && availableTasks.length > 0 && (
-                <span className={isLight ? 'text-slate-400 text-xs' : 'text-slate-600 text-xs'}>/</span>
+                <span className="text-muted-foreground text-xs">/</span>
               )}
 
               {selectedProjectId && availableTasks.length > 0 && (
                 <select
                   value={selectedTaskId}
                   onChange={(e) => setSelectedTaskId(e.target.value)}
-                  className={`bg-transparent text-sm font-medium focus:outline-none cursor-pointer border-b border-transparent hover:border-slate-400 transition-colors ${isLight ? 'text-slate-700' : 'text-slate-300'
-                    }`}
+                  className="bg-transparent text-sm font-medium focus:outline-none cursor-pointer border-b border-transparent hover:border-border transition-colors text-foreground"
                 >
-                  <option value="" className={isLight ? 'bg-white text-slate-500' : 'bg-slate-900 text-slate-400'}>Select Task (Optional)</option>
+                  <option value="" className="bg-card text-muted-foreground">Select Task (Optional)</option>
                   {availableTasks.map((t) => (
-                    <option key={t.id} value={t.id} className={isLight ? 'bg-white text-slate-800' : 'bg-slate-900 text-slate-200'}>
+                    <option key={t.id} value={t.id} className="bg-card text-card-foreground">
                       {t.name}
                     </option>
                   ))}
@@ -299,14 +284,12 @@ export default function Timer({
         {/* Ambient Sound Toggle */}
         <button
           onClick={() => setIsAmbientPlaying(!isAmbientPlaying)}
-          className={`flex items-center gap-2 text-xs font-medium px-3 py-1.5 rounded-xl border transition-all cursor-pointer ${isAmbientPlaying
-              ? isLight
-                ? 'bg-indigo-50 border-indigo-200 text-indigo-700 shadow-sm'
-                : 'bg-indigo-500/20 border-indigo-500/50 text-indigo-300 shadow-md shadow-indigo-500/10'
-              : isLight
-                ? 'bg-slate-100 border-slate-200 text-slate-600 hover:text-slate-900 hover:bg-slate-200'
-                : 'bg-slate-800/40 border-slate-700/50 text-slate-400 hover:text-slate-200'
-            }`}
+          className={cn(
+            "flex items-center gap-2 text-xs font-medium px-3 py-1.5 rounded-xl border transition-all cursor-pointer",
+            isAmbientPlaying
+              ? "bg-indigo-500/20 border-indigo-500/50 text-indigo-400 shadow-sm"
+              : "bg-muted border-border text-muted-foreground hover:text-foreground hover:bg-accent"
+          )}
           title="Toggle ambient background noise"
         >
           <CloudRain className="w-3.5 h-3.5" />
@@ -322,7 +305,7 @@ export default function Timer({
             cx="50%"
             cy="50%"
             r="140"
-            className={isLight ? 'stroke-slate-200' : 'stroke-slate-800/60'}
+            className="stroke-border"
             strokeWidth="12"
             fill="transparent"
           />
@@ -331,12 +314,10 @@ export default function Timer({
             cx="50%"
             cy="50%"
             r="140"
-            className={`transition-all duration-1000 ease-linear ${isBreakMode
-                ? 'stroke-emerald-500'
-                : mode === 'stopwatch'
-                  ? 'stroke-amber-500'
-                  : 'stroke-rose-500'
-              }`}
+            className={cn(
+              "transition-all duration-1000 ease-linear",
+              isBreakMode ? 'stroke-emerald-500' : mode === 'stopwatch' ? 'stroke-amber-500' : 'stroke-rose-500'
+            )}
             strokeWidth="12"
             strokeDasharray={strokeDasharray}
             strokeDashoffset={strokeDashoffset}
@@ -347,34 +328,27 @@ export default function Timer({
 
         {/* Inner Content */}
         <div
-          className={`absolute flex flex-col items-center justify-center w-64 h-64 rounded-full glass-card transition-all ${isLight ? 'bg-white/95 border-slate-200/80 shadow-xl shadow-slate-200/60' : ''
-            } ${isRunning
-              ? isBreakMode
-                ? 'timer-active-break'
-                : 'timer-active-work'
-              : ''
-            }`}
+          className={cn(
+            "absolute flex flex-col items-center justify-center w-64 h-64 rounded-full glass-card transition-all border border-border shadow-xl",
+            isRunning ? (isBreakMode ? 'timer-active-break' : 'timer-active-work') : ''
+          )}
         >
-          <span className={`text-5xl md:text-6xl font-extrabold font-mono tracking-tight ${isLight ? 'text-slate-900' : 'text-white drop-shadow-md'
-            }`}>
+          <span className="text-5xl md:text-6xl font-extrabold font-mono tracking-tight text-foreground">
             {formatTime(timeLeft)}
           </span>
 
           <span className="text-xs font-semibold uppercase tracking-widest mt-2 flex items-center gap-1.5">
             {isBreakMode ? (
-              <span className={isLight ? 'text-emerald-600 font-bold' : 'text-emerald-400 font-medium'}>Break Time</span>
+              <span className="text-emerald-500 font-bold">Break Time</span>
             ) : mode === 'stopwatch' ? (
-              <span className={isLight ? 'text-amber-600 font-bold' : 'text-amber-400 font-medium'}>Stopwatch</span>
+              <span className="text-amber-500 font-bold">Stopwatch</span>
             ) : (
-              <span className={isLight ? 'text-rose-600 font-bold' : 'text-rose-400 font-medium'}>Focus Phase</span>
+              <span className="text-rose-500 font-bold">Focus Phase</span>
             )}
           </span>
 
           {completedCycles > 0 && (
-            <span className={`text-[11px] mt-2 px-2.5 py-0.5 rounded-full border ${isLight
-                ? 'bg-slate-100 text-slate-700 border-slate-200'
-                : 'bg-slate-900/80 text-slate-500 border-slate-800'
-              }`}>
+            <span className="text-[11px] mt-2 px-2.5 py-0.5 rounded-full border border-border bg-muted text-muted-foreground">
               Completed: {completedCycles} Pomodoros
             </span>
           )}
@@ -385,10 +359,7 @@ export default function Timer({
       <div className="flex items-center gap-4 mt-8">
         <button
           onClick={handleReset}
-          className={`p-3.5 rounded-2xl border transition-all cursor-pointer shadow-md hover:scale-105 active:scale-95 ${isLight
-              ? 'bg-white border-slate-200 text-slate-600 hover:text-slate-900 hover:bg-slate-100 shadow-slate-200/50'
-              : 'bg-slate-900/80 border-slate-800 text-slate-400 hover:text-white hover:bg-slate-800'
-            }`}
+          className="p-3.5 rounded-2xl border border-border bg-card text-muted-foreground hover:text-foreground hover:bg-accent transition-all cursor-pointer shadow-md hover:scale-105 active:scale-95"
           title="Reset Timer"
         >
           <RotateCcw className="w-5 h-5" />
@@ -396,16 +367,16 @@ export default function Timer({
 
         <button
           onClick={handleStartPause}
-          className={`flex items-center gap-3 px-8 py-4 rounded-2xl text-base font-bold transition-all shadow-xl cursor-pointer hover:scale-105 active:scale-95 ${isRunning
-              ? isLight
-                ? 'bg-slate-200 border border-slate-300 text-slate-900 hover:bg-slate-300'
-                : 'bg-slate-800 border border-slate-700 text-white hover:bg-slate-700'
+          className={cn(
+            "flex items-center gap-3 px-8 py-4 rounded-2xl text-base font-bold transition-all shadow-xl cursor-pointer hover:scale-105 active:scale-95",
+            isRunning
+              ? "bg-muted border border-border text-foreground hover:bg-accent"
               : isBreakMode
-                ? 'bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white shadow-emerald-500/25'
-                : mode === 'stopwatch'
-                  ? 'bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 text-white shadow-amber-500/25'
-                  : 'bg-gradient-to-r from-rose-500 to-indigo-600 hover:from-rose-600 hover:to-indigo-700 text-white shadow-rose-500/25'
-            }`}
+              ? "bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white shadow-emerald-500/25"
+              : mode === 'stopwatch'
+              ? "bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 text-white shadow-amber-500/25"
+              : "bg-gradient-to-r from-rose-500 to-indigo-600 hover:from-rose-600 hover:to-indigo-700 text-white shadow-rose-500/25"
+          )}
         >
           {isRunning ? <Pause className="w-6 h-6 fill-current" /> : <Play className="w-6 h-6 fill-current" />}
           <span>{isRunning ? 'Pause' : 'Start Focus'}</span>
@@ -413,10 +384,7 @@ export default function Timer({
 
         <button
           onClick={handleSkip}
-          className={`p-3.5 rounded-2xl border transition-all cursor-pointer shadow-md hover:scale-105 active:scale-95 ${isLight
-              ? 'bg-white border-slate-200 text-slate-600 hover:text-slate-900 hover:bg-slate-100 shadow-slate-200/50'
-              : 'bg-slate-900/80 border-slate-800 text-slate-400 hover:text-white hover:bg-slate-800'
-            }`}
+          className="p-3.5 rounded-2xl border border-border bg-card text-muted-foreground hover:text-foreground hover:bg-accent transition-all cursor-pointer shadow-md hover:scale-105 active:scale-95"
           title="Skip to Next"
         >
           <SkipForward className="w-5 h-5" />
