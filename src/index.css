@@ -1,0 +1,91 @@
+@import "tailwindcss";
+
+@layer base {
+  body {
+    font-family: 'Inter', sans-serif;
+    background-color: #090d16;
+    color: #f1f5f9;
+  }
+
+  h1, h2, h3, h4, .font-heading {
+    font-family: 'Outfit', sans-serif;
+  }
+
+  .font-mono {
+    font-family: 'JetBrains Mono', monospace;
+  }
+}
+
+/* Custom Glassmorphism & Animations */
+.glass-panel {
+  background: rgba(15, 23, 42, 0.65);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+}
+
+.glass-panel-interactive {
+  background: rgba(30, 41, 59, 0.5);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.glass-panel-interactive:hover {
+  background: rgba(47, 63, 86, 0.65);
+  border-color: rgba(255, 255, 255, 0.18);
+  transform: translateY(-1px);
+}
+
+.glass-card {
+  background: rgba(15, 23, 42, 0.8);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Pulsing Timer Glow */
+@keyframes timerPulse {
+  0%, 100% {
+    box-shadow: 0 0 25px rgba(244, 63, 94, 0.25), inset 0 0 25px rgba(244, 63, 94, 0.15);
+  }
+  50% {
+    box-shadow: 0 0 45px rgba(244, 63, 94, 0.45), inset 0 0 35px rgba(244, 63, 94, 0.3);
+  }
+}
+
+.timer-active-work {
+  animation: timerPulse 3s infinite ease-in-out;
+}
+
+@keyframes breakPulse {
+  0%, 100% {
+    box-shadow: 0 0 25px rgba(16, 185, 129, 0.25), inset 0 0 25px rgba(16, 185, 129, 0.15);
+  }
+  50% {
+    box-shadow: 0 0 45px rgba(16, 185, 129, 0.45), inset 0 0 35px rgba(16, 185, 129, 0.3);
+  }
+}
+
+.timer-active-break {
+  animation: breakPulse 3s infinite ease-in-out;
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: rgba(15, 23, 42, 0.5);
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(51, 65, 85, 0.8);
+  border-radius: 9999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(100, 116, 139, 0.9);
+}
