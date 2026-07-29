@@ -90,7 +90,7 @@ export default function ProjectDashboardGrid({
 
   // Helper to format total focus seconds into readable hours/minutes
   const getProjectFocusStats = (projectId: string) => {
-    const projSessions = sessions.filter(s => s.projectId === projectId && (s.mode === 'work' || s.mode === ('stopwatch' as any)));
+    const projSessions = sessions.filter(s => (projectId ? s.projectId === projectId : !s.projectId) && (s.mode === 'work' || s.mode === ('stopwatch' as any)));
     const totalSeconds = projSessions.reduce((acc, curr) => acc + (curr.durationSeconds || 0), 0);
     const hours = Math.floor(totalSeconds / 3600);
     const minutes = Math.floor((totalSeconds % 3600) / 60);
@@ -101,6 +101,19 @@ export default function ProjectDashboardGrid({
       formattedTime: hours > 0 ? `${hours}h ${minutes}m` : `${minutes}m`
     };
   };
+
+  const uncategorizedTasks = tasks.filter(t => !t.projectId || t.projectId === '');
+  const uncategorizedProject: Project = {
+    id: '',
+    name: 'Uncategorized Tasks',
+    color: '#94a3b8',
+    createdAt: new Date().toISOString()
+  };
+
+  const displayGridProjects = [...projects];
+  if (uncategorizedTasks.length > 0 || projects.length === 0) {
+    displayGridProjects.push(uncategorizedProject);
+  }
 
   return (
     <div className="space-y-6">
@@ -122,7 +135,7 @@ export default function ProjectDashboardGrid({
         )}
       </div>
 
-      {projects.length === 0 ? (
+      {displayGridProjects.length === 0 ? (
         <div className="glass-panel rounded-2xl p-10 text-center text-muted-foreground text-sm space-y-3">
           <p>No projects created yet.</p>
           {onOpenCreateProject && (
@@ -137,8 +150,10 @@ export default function ProjectDashboardGrid({
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-          {projects.map((proj) => {
-            const projTasks = tasks.filter(t => t.projectId === proj.id);
+          {displayGridProjects.map((proj) => {
+            const projTasks = proj.id === ''
+              ? uncategorizedTasks
+              : tasks.filter(t => t.projectId === proj.id);
             const doneTasks = projTasks.filter(t => t.status === 'done' || t.completed);
             const inProgressTasks = projTasks.filter(t => t.status === 'in_progress');
             const nextTasks = projTasks.filter(t => t.status === 'next');
@@ -149,7 +164,7 @@ export default function ProjectDashboardGrid({
 
             return (
               <div
-                key={proj.id}
+                key={proj.id || 'uncategorized'}
                 className="glass-panel rounded-2xl border border-border/80 p-5 bg-card/60 backdrop-blur-md transition-all hover:border-border hover:shadow-lg flex flex-col justify-between space-y-4 group"
               >
                 {/* Top Bar: Color, Title & Delete */}
@@ -158,21 +173,23 @@ export default function ProjectDashboardGrid({
                     <div className="flex items-center gap-2.5 min-w-0">
                       {/* Interactive Color Badge */}
                       <button
-                        onClick={() => setEditingColorProjectId(isEditingColor ? null : proj.id)}
+                        onClick={() => proj.id && setEditingColorProjectId(isEditingColor ? null : proj.id)}
                         className="w-4 h-4 rounded-full shrink-0 transition-transform hover:scale-125 cursor-pointer ring-2 ring-white/20"
                         style={{ backgroundColor: proj.color }}
-                        title="Click to customize badge color"
+                        title={proj.id ? "Click to customize badge color" : "Uncategorized"}
                       />
                       <h4 className="font-bold text-base text-foreground tracking-tight truncate">{proj.name}</h4>
                     </div>
 
-                    <button
-                      onClick={() => handleDeleteProject(proj.id)}
-                      className="p-1.5 rounded-lg text-muted-foreground hover:text-rose-400 hover:bg-rose-500/10 transition-colors opacity-80 group-hover:opacity-100 cursor-pointer"
-                      title="Delete Project"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
+                    {proj.id && (
+                      <button
+                        onClick={() => handleDeleteProject(proj.id)}
+                        className="p-1.5 rounded-lg text-muted-foreground hover:text-rose-400 hover:bg-rose-500/10 transition-colors opacity-80 group-hover:opacity-100 cursor-pointer"
+                        title="Delete Project"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    )}
                   </div>
 
                   {/* Palette Selector Popover */}

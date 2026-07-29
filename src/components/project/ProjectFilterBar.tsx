@@ -60,6 +60,7 @@ export default function ProjectFilterBar({
           className="bg-card border border-border text-foreground rounded-xl px-2.5 py-1.5 text-xs focus:outline-none cursor-pointer"
         >
           <option value="all">All Projects ({projects.length})</option>
+          <option value="uncategorized">No Project (Uncategorized)</option>
           {projects.map(p => (
             <option key={p.id} value={p.id}>
               {p.name}

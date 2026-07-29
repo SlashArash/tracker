@@ -58,60 +58,83 @@ export default function ProjectListView({
   // Visible task limit for pagination per project
   const [visibleListTaskCounts, setVisibleListTaskCounts] = useState<Record<string, number>>({});
 
-  if (projects.length === 0) {
+  // Filter projects to display, including an Uncategorized card if applicable
+  const uncategorizedTasks = tasks.filter(t => !t.projectId || t.projectId === '');
+
+  const uncategorizedProject: Project = {
+    id: '',
+    name: 'Uncategorized Tasks',
+    color: '#94a3b8',
+    createdAt: new Date().toISOString()
+  };
+
+  let displayProjects: Project[] = [];
+  if (selectedProjectFilter === 'uncategorized') {
+    displayProjects = [uncategorizedProject];
+  } else if (selectedProjectFilter === 'all') {
+    displayProjects = [...projects];
+    if (uncategorizedTasks.length > 0 || projects.length === 0) {
+      displayProjects.push(uncategorizedProject);
+    }
+  } else {
+    displayProjects = projects.filter(p => p.id === selectedProjectFilter);
+  }
+
+  if (displayProjects.length === 0) {
     return (
       <div className="glass-panel rounded-2xl p-8 text-center text-muted-foreground text-sm">
-        No projects created yet. Click <span className="text-foreground font-medium">"New Project"</span> to get started.
+        No projects or tasks found matching the filter.
       </div>
     );
   }
 
   return (
     <div className="space-y-4">
-      {projects
-        .filter(p => selectedProjectFilter === 'all' || p.id === selectedProjectFilter)
-        .map((proj) => {
-          const rawProjectTasks = tasks.filter((t) => t.projectId === proj.id);
-          const isExpanded = expandedProjectId === proj.id || projects.length === 1 || selectedProjectFilter !== 'all';
-          const currentSort = sortBy[proj.id] || 'priority';
+      {displayProjects.map((proj) => {
+        const rawProjectTasks = proj.id === ''
+          ? uncategorizedTasks
+          : tasks.filter((t) => t.projectId === proj.id);
+        const isExpanded = expandedProjectId === proj.id || displayProjects.length === 1 || selectedProjectFilter !== 'all';
+        const currentSort = sortBy[proj.id] || 'priority';
 
-          // Sort tasks
-          const sortedTasks = [...rawProjectTasks].sort((a, b) => {
-            if (currentSort === 'priority') {
-              const levelA = PRIORITY_CONFIG[a.priority || 'medium']?.level || 2;
-              const levelB = PRIORITY_CONFIG[b.priority || 'medium']?.level || 2;
-              return levelB - levelA;
-            } else if (currentSort === 'status') {
-              const statusOrder: Record<TaskStatus, number> = {
-                in_progress: 1,
-                next: 2,
-                not_started: 3,
-                done: 4
-              };
-              return (statusOrder[a.status || 'not_started'] || 3) - (statusOrder[b.status || 'not_started'] || 3);
-            } else {
-              return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
-            }
-          });
+        // Sort tasks
+        const sortedTasks = [...rawProjectTasks].sort((a, b) => {
+          if (currentSort === 'priority') {
+            const levelA = PRIORITY_CONFIG[a.priority || 'medium']?.level || 2;
+            const levelB = PRIORITY_CONFIG[b.priority || 'medium']?.level || 2;
+            return levelB - levelA;
+          } else if (currentSort === 'status') {
+            const statusOrder: Record<TaskStatus, number> = {
+              in_progress: 1,
+              next: 2,
+              not_started: 3,
+              done: 4
+            };
+            return (statusOrder[a.status || 'not_started'] || 3) - (statusOrder[b.status || 'not_started'] || 3);
+          } else {
+            return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+          }
+        });
 
-          const projectDoneCount = rawProjectTasks.filter(t => t.status === 'done' || t.completed).length;
+        const projectDoneCount = rawProjectTasks.filter(t => t.status === 'done' || t.completed).length;
 
-          return (
-            <div key={proj.id} className="glass-panel rounded-2xl border border-border/80 overflow-hidden transition-all shadow-xs">
-              {/* Project Header Bar */}
-              <div
-                className="flex items-center justify-between p-4 bg-card/60 cursor-pointer hover:bg-card/90 transition-colors"
-                onClick={() => onSetExpandedProjectId(isExpanded ? null : proj.id)}
-              >
-                <div className="flex items-center gap-3">
-                  <div className="w-3.5 h-3.5 rounded-full shrink-0" style={{ backgroundColor: proj.color }} />
-                  <h3 className="font-semibold text-foreground text-base tracking-tight">{proj.name}</h3>
-                  <span className="text-xs bg-muted text-muted-foreground px-2.5 py-0.5 rounded-full border border-border">
-                    {projectDoneCount}/{rawProjectTasks.length} done
-                  </span>
-                </div>
+        return (
+          <div key={proj.id || 'uncategorized'} className="glass-panel rounded-2xl border border-border/80 overflow-hidden transition-all shadow-xs">
+            {/* Project Header Bar */}
+            <div
+              className="flex items-center justify-between p-4 bg-card/60 cursor-pointer hover:bg-card/90 transition-colors"
+              onClick={() => onSetExpandedProjectId(isExpanded ? null : proj.id)}
+            >
+              <div className="flex items-center gap-3">
+                <div className="w-3.5 h-3.5 rounded-full shrink-0" style={{ backgroundColor: proj.color }} />
+                <h3 className="font-semibold text-foreground text-base tracking-tight">{proj.name}</h3>
+                <span className="text-xs bg-muted text-muted-foreground px-2.5 py-0.5 rounded-full border border-border">
+                  {projectDoneCount}/{rawProjectTasks.length} done
+                </span>
+              </div>
 
-                <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2">
+                {proj.id && (
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
@@ -122,11 +145,12 @@ export default function ProjectListView({
                   >
                     <Trash2 className="w-4 h-4" />
                   </button>
-                  <button className="text-muted-foreground p-1">
-                    {isExpanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
-                  </button>
-                </div>
+                )}
+                <button className="text-muted-foreground p-1">
+                  {isExpanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+                </button>
               </div>
+            </div>
 
               {/* Expanded Tasks Section */}
               {isExpanded && (

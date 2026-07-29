@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Circle,
   ArrowRightCircle,
@@ -23,6 +23,7 @@ export interface KanbanBoardProps {
   projects: Project[];
   tasks: Task[];
   sessions?: Session[];
+  selectedProjectFilter?: string;
   onRefresh: () => void;
   onStartTaskFocus?: (projectId: string, taskId: string) => void;
 }
@@ -58,9 +59,17 @@ export default function KanbanBoard({
   projects,
   tasks,
   sessions = [],
+  selectedProjectFilter = 'all',
   onRefresh,
   onStartTaskFocus
 }: KanbanBoardProps) {
+  // Determine active default project based on filter
+  const activeDefaultProject =
+    selectedProjectFilter && selectedProjectFilter !== 'all' && selectedProjectFilter !== 'uncategorized'
+      ? selectedProjectFilter
+      : '';
+
+
   // Column-specific new task input state
   const [columnInput, setColumnInput] = useState<Record<TaskStatus, string>>({
     not_started: '',
@@ -69,11 +78,22 @@ export default function KanbanBoard({
     done: ''
   });
   const [columnSelectedProject, setColumnSelectedProject] = useState<Record<TaskStatus, string>>({
-    not_started: projects[0]?.id || '',
-    next: projects[0]?.id || '',
-    in_progress: projects[0]?.id || '',
-    done: projects[0]?.id || ''
+    not_started: activeDefaultProject,
+    next: activeDefaultProject,
+    in_progress: activeDefaultProject,
+    done: activeDefaultProject
   });
+
+  // Sync column project selection whenever active filter changes
+  useEffect(() => {
+    setColumnSelectedProject({
+      not_started: activeDefaultProject,
+      next: activeDefaultProject,
+      in_progress: activeDefaultProject,
+      done: activeDefaultProject
+    });
+  }, [activeDefaultProject]);
+
   const [showAddForm, setShowAddForm] = useState<Record<TaskStatus, boolean>>({
     not_started: false,
     next: false,
@@ -107,11 +127,7 @@ export default function KanbanBoard({
     const taskName = columnInput[status];
     if (!taskName || !taskName.trim()) return;
 
-    const projectId = columnSelectedProject[status] || projects[0]?.id;
-    if (!projectId) {
-      alert('Please create at least one project first!');
-      return;
-    }
+    const projectId = columnSelectedProject[status] !== undefined ? columnSelectedProject[status] : activeDefaultProject;
 
     await db.tasks.add({
       id: 'task_' + Date.now() + '_' + Math.random().toString(36).substring(2, 6),
@@ -199,7 +215,13 @@ export default function KanbanBoard({
                 </div>
 
                 <button
-                  onClick={() => setShowAddForm({ ...showAddForm, [col.status]: !showAddForm[col.status] })}
+                  onClick={() => {
+                    const isOpening = !showAddForm[col.status];
+                    if (isOpening) {
+                      setColumnSelectedProject(prev => ({ ...prev, [col.status]: activeDefaultProject }));
+                    }
+                    setShowAddForm({ ...showAddForm, [col.status]: isOpening });
+                  }}
                   className="p-1.5 rounded-lg hover:bg-accent text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
                   title={`Add Task to ${col.label}`}
                 >
@@ -222,19 +244,18 @@ export default function KanbanBoard({
                     autoFocus
                   />
 
-                  {projects.length > 0 && (
-                    <select
-                      value={columnSelectedProject[col.status] || projects[0]?.id}
-                      onChange={(e) => setColumnSelectedProject({ ...columnSelectedProject, [col.status]: e.target.value })}
-                      className="w-full bg-card border border-border text-foreground text-[11px] rounded-lg p-1.5 focus:outline-none cursor-pointer"
-                    >
-                      {projects.map(p => (
-                        <option key={p.id} value={p.id}>
-                          Project: {p.name}
-                        </option>
-                      ))}
-                    </select>
-                  )}
+                  <select
+                    value={columnSelectedProject[col.status] !== undefined ? columnSelectedProject[col.status] : activeDefaultProject}
+                    onChange={(e) => setColumnSelectedProject({ ...columnSelectedProject, [col.status]: e.target.value })}
+                    className="w-full bg-card border border-border text-foreground text-[11px] rounded-lg p-1.5 focus:outline-none cursor-pointer"
+                  >
+                    <option value="">No Project (Uncategorized)</option>
+                    {projects.map(p => (
+                      <option key={p.id} value={p.id}>
+                        Project: {p.name}
+                      </option>
+                    ))}
+                  </select>
 
                   <div className="flex items-center justify-end gap-1.5 pt-1">
                     <button

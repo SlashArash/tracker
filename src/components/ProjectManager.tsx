@@ -6,6 +6,7 @@ import {
   Flame,
   CheckCircle2,
   FolderPlus,
+  Plus,
   Columns,
   List,
   LayoutGrid
@@ -17,6 +18,7 @@ import KanbanBoard from './KanbanBoard';
 import ProjectDashboardGrid from './ProjectDashboardGrid';
 import ProjectFilterBar from './project/ProjectFilterBar';
 import NewProjectModal from './project/NewProjectModal';
+import NewTaskModal from './project/NewTaskModal';
 import ProjectListView from './project/ProjectListView';
 
 export const COLOR_PALETTE = [
@@ -108,6 +110,7 @@ export default function ProjectManager({
   const [newProjectName, setNewProjectName] = useState('');
   const [newProjectColor, setNewProjectColor] = useState(COLOR_PALETTE[0]);
   const [isCreatingProject, setIsCreatingProject] = useState(false);
+  const [isCreatingTask, setIsCreatingTask] = useState(false);
   const [expandedProjectId, setExpandedProjectId] = useState<string | null>(null);
 
   // Global Command Center State persisted in URL search params via nuqs
@@ -146,6 +149,28 @@ export default function ProjectManager({
     setNewProjectName('');
     setIsCreatingProject(false);
     setExpandedProjectId(projectId);
+    onRefresh();
+  };
+
+  const handleCreateTaskFromModal = async (taskData: {
+    name: string;
+    projectId: string;
+    status: TaskStatus;
+    priority: TaskPriority;
+    description?: string;
+  }) => {
+    await db.tasks.add({
+      id: 'task_' + Date.now() + '_' + Math.random().toString(36).substring(2, 6),
+      projectId: taskData.projectId,
+      name: taskData.name,
+      status: taskData.status,
+      priority: taskData.priority,
+      description: taskData.description,
+      completed: taskData.status === 'done',
+      createdAt: new Date().toISOString()
+    });
+
+    setIsCreatingTask(false);
     onRefresh();
   };
 
@@ -222,7 +247,11 @@ export default function ProjectManager({
 
   // Global filtering logic across tasks
   const filteredTasks = tasks.filter((t) => {
-    if (selectedProjectFilter !== 'all' && t.projectId !== selectedProjectFilter) return false;
+    if (selectedProjectFilter === 'uncategorized') {
+      if (t.projectId) return false;
+    } else if (selectedProjectFilter !== 'all' && t.projectId !== selectedProjectFilter) {
+      return false;
+    }
     if (selectedStatusFilter !== 'all' && t.status !== selectedStatusFilter) return false;
     if (selectedPriorityFilter !== 'all' && t.priority !== selectedPriorityFilter) return false;
     if (searchQuery.trim()) {
@@ -299,6 +328,14 @@ export default function ProjectManager({
           </div>
 
           <button
+            onClick={() => setIsCreatingTask(!isCreatingTask)}
+            className="flex items-center gap-2 bg-rose-500 hover:bg-rose-600 text-white text-xs font-semibold px-4 py-2 rounded-xl transition-all shadow-md shadow-rose-500/20 cursor-pointer shrink-0"
+          >
+            <Plus className="w-4 h-4" />
+            <span className="hidden sm:inline">New Task</span>
+          </button>
+
+          <button
             onClick={() => setIsCreatingProject(!isCreatingProject)}
             className="flex items-center gap-2 bg-linear-to-r from-rose-500 to-indigo-600 hover:from-rose-600 hover:to-indigo-700 text-white text-xs font-semibold px-4 py-2 rounded-xl transition-all shadow-md shadow-rose-500/20 cursor-pointer shrink-0"
           >
@@ -323,6 +360,16 @@ export default function ProjectManager({
         onClearCompleted={handleClearCompletedTasks}
       />
 
+      {/* New Task Form Overlay */}
+      {isCreatingTask && (
+        <NewTaskModal
+          projects={projects}
+          defaultProjectId={selectedProjectFilter}
+          onSubmit={handleCreateTaskFromModal}
+          onCancel={() => setIsCreatingTask(false)}
+        />
+      )}
+
       {/* New Project Form Overlay */}
       {isCreatingProject && (
         <NewProjectModal
@@ -343,6 +390,7 @@ export default function ProjectManager({
           sessions={sessions}
           onRefresh={onRefresh}
           onStartTaskFocus={onStartTaskFocus}
+          selectedProjectFilter={selectedProjectFilter}
         />
       )}
 
