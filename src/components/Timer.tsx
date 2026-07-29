@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { useQueryState, parseAsString } from 'nuqs';
 import { Play, Pause, RotateCcw, SkipForward, CloudRain, Flame, Coffee, Sparkles, Circle, ArrowRightCircle, CheckCircle2 } from 'lucide-react';
 import { playAlertSound, startAmbientSound, stopAmbientSound } from '../services/audio';
 import { logCompletedSession, db } from '../services/db';
@@ -29,18 +30,24 @@ export default function Timer({
   const [timeLeft, setTimeLeft] = useState<number>(settings.workDuration * 60);
   const [isRunning, setIsRunning] = useState<boolean>(false);
   const [completedCycles, setCompletedCycles] = useState<number>(0);
-  const [selectedProjectId, setSelectedProjectId] = useState<string>(initialProjectId || '');
-  const [selectedTaskId, setSelectedTaskId] = useState<string>(initialTaskId || '');
+  const [selectedProjectId, setSelectedProjectId] = useQueryState(
+    'project',
+    parseAsString.withDefault('')
+  );
+  const [selectedTaskId, setSelectedTaskId] = useQueryState(
+    'task',
+    parseAsString.withDefault('')
+  );
   const [isAmbientPlaying, setIsAmbientPlaying] = useState<boolean>(false);
 
   useEffect(() => {
-    if (initialProjectId) {
+    if (initialProjectId !== undefined && initialProjectId !== selectedProjectId) {
       setSelectedProjectId(initialProjectId);
     }
   }, [initialProjectId]);
 
   useEffect(() => {
-    if (initialTaskId) {
+    if (initialTaskId !== undefined && initialTaskId !== selectedTaskId) {
       setSelectedTaskId(initialTaskId);
     }
   }, [initialTaskId]);

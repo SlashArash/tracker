@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useQueryState, parseAsString, parseAsStringLiteral } from 'nuqs';
 import { Timer as TimerIcon, FolderGit2, History, Settings as SettingsIcon, FileJson, Lock, Sparkles, Sun, Moon } from 'lucide-react';
 import { db, initDatabase, getSettings, saveSetting } from './services/db';
 import { Project, Task, Session, AppSettings } from './types';
@@ -13,14 +14,40 @@ import { cn } from './lib/utils';
 export type TabType = 'timer' | 'projects' | 'history';
 
 export default function App() {
-  const [activeTab, setActiveTab] = useState<TabType>('timer');
+  const [activeTab, setActiveTab] = useQueryState(
+    'tab',
+    parseAsStringLiteral(['timer', 'projects', 'history'] as const).withDefault('timer')
+  );
   const [isLocked, setIsLocked] = useState<boolean>(false);
   const [isLockSetup, setIsLockSetup] = useState<boolean>(false);
   const [activePasscode, setActivePasscode] = useState<string | null>(null);
 
-  // Focus navigation state
-  const [activeFocusProjectId, setActiveFocusProjectId] = useState<string>('');
-  const [activeFocusTaskId, setActiveFocusTaskId] = useState<string>('');
+  // Focus navigation search params state
+  const [activeFocusProjectId, setActiveFocusProjectId] = useQueryState(
+    'project',
+    parseAsString.withDefault('')
+  );
+  const [activeFocusTaskId, setActiveFocusTaskId] = useQueryState(
+    'task',
+    parseAsString.withDefault('')
+  );
+
+  // Search param setters for clearing filters on tab switch
+  const [, setViewParam] = useQueryState('view', parseAsString);
+  const [, setStatusParam] = useQueryState('status', parseAsString);
+  const [, setPriorityParam] = useQueryState('priority', parseAsString);
+  const [, setQParam] = useQueryState('q', parseAsString);
+
+  const handleTabSwitch = (newTab: TabType) => {
+    setActiveTab(newTab);
+    // Clear filters and focus search params from URL when explicitly switching tabs
+    setActiveFocusProjectId(null);
+    setActiveFocusTaskId(null);
+    setViewParam(null);
+    setStatusParam(null);
+    setPriorityParam(null);
+    setQParam(null);
+  };
 
   // App data state
   const [projects, setProjects] = useState<Project[]>([]);
@@ -163,7 +190,7 @@ export default function App() {
           {/* Desktop Integrated Navigation Tabs */}
           <nav className="hidden md:flex items-center gap-1 p-1 rounded-xl border border-border bg-card/60 backdrop-blur-md shadow-xs">
             <button
-              onClick={() => setActiveTab('timer')}
+              onClick={() => handleTabSwitch('timer')}
               className={cn(
                 "flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer",
                 activeTab === 'timer'
@@ -176,7 +203,7 @@ export default function App() {
             </button>
 
             <button
-              onClick={() => setActiveTab('projects')}
+              onClick={() => handleTabSwitch('projects')}
               className={cn(
                 "flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer",
                 activeTab === 'projects'
@@ -199,7 +226,7 @@ export default function App() {
             </button>
 
             <button
-              onClick={() => setActiveTab('history')}
+              onClick={() => handleTabSwitch('history')}
               className={cn(
                 "flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer",
                 activeTab === 'history'
@@ -258,7 +285,7 @@ export default function App() {
       {/* Mobile Floating Bottom Glassmorphism Navigation Bar */}
       <nav className="md:hidden fixed bottom-4 left-4 right-4 z-40 bg-background/85 backdrop-blur-xl border border-border/80 shadow-2xl rounded-2xl p-1.5 flex items-center justify-around">
         <button
-          onClick={() => setActiveTab('timer')}
+          onClick={() => handleTabSwitch('timer')}
           className={cn(
             "flex-1 flex flex-col items-center justify-center gap-1 py-2 px-3 rounded-xl text-xs font-medium transition-all cursor-pointer",
             activeTab === 'timer'
@@ -271,7 +298,7 @@ export default function App() {
         </button>
 
         <button
-          onClick={() => setActiveTab('projects')}
+          onClick={() => handleTabSwitch('projects')}
           className={cn(
             "flex-1 flex flex-col items-center justify-center gap-1 py-2 px-3 rounded-xl text-xs font-medium transition-all cursor-pointer relative",
             activeTab === 'projects'
@@ -296,7 +323,7 @@ export default function App() {
         </button>
 
         <button
-          onClick={() => setActiveTab('history')}
+          onClick={() => handleTabSwitch('history')}
           className={cn(
             "flex-1 flex flex-col items-center justify-center gap-1 py-2 px-3 rounded-xl text-xs font-medium transition-all cursor-pointer",
             activeTab === 'history'

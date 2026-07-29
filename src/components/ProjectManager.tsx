@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useQueryState, parseAsString, parseAsStringLiteral } from 'nuqs';
 import {
   Plus,
   Trash2,
@@ -109,7 +110,10 @@ export default function ProjectManager({
   onRefresh,
   onStartTaskFocus
 }: ProjectManagerProps) {
-  const [viewMode, setViewMode] = useState<ViewMode>('kanban');
+  const [viewMode, setViewMode] = useQueryState(
+    'view',
+    parseAsStringLiteral(['kanban', 'list', 'dashboard'] as const).withDefault('kanban')
+  );
 
   // New Project Form State
   const [newProjectName, setNewProjectName] = useState('');
@@ -117,11 +121,17 @@ export default function ProjectManager({
   const [isCreatingProject, setIsCreatingProject] = useState(false);
   const [expandedProjectId, setExpandedProjectId] = useState<string | null>(null);
 
-  // Global Command Center State
-  const [searchQuery, setSearchQuery] = useState('');
-  const [selectedProjectFilter, setSelectedProjectFilter] = useState<string>('all');
-  const [selectedStatusFilter, setSelectedStatusFilter] = useState<string>('all');
-  const [selectedPriorityFilter, setSelectedPriorityFilter] = useState<string>('all');
+  // Global Command Center State persisted in URL search params via nuqs
+  const [searchQuery, setSearchQuery] = useQueryState('q', parseAsString.withDefault(''));
+  const [selectedProjectFilter, setSelectedProjectFilter] = useQueryState('project', parseAsString.withDefault('all'));
+  const [selectedStatusFilter, setSelectedStatusFilter] = useQueryState(
+    'status',
+    parseAsStringLiteral(['all', 'not_started', 'next', 'in_progress', 'done'] as const).withDefault('all')
+  );
+  const [selectedPriorityFilter, setSelectedPriorityFilter] = useQueryState(
+    'priority',
+    parseAsStringLiteral(['all', 'urgent', 'high', 'medium', 'low'] as const).withDefault('all')
+  );
 
   // New task form state per project in list view
   const [newTaskNames, setNewTaskNames] = useState<Record<string, string>>({});
@@ -356,7 +366,7 @@ export default function ProjectManager({
           {/* Status Filter */}
           <select
             value={selectedStatusFilter}
-            onChange={(e) => setSelectedStatusFilter(e.target.value)}
+            onChange={(e) => setSelectedStatusFilter(e.target.value as any)}
             className="bg-card border border-border text-foreground rounded-xl px-2.5 py-1.5 text-xs focus:outline-none cursor-pointer"
           >
             <option value="all">All Statuses</option>
@@ -369,7 +379,7 @@ export default function ProjectManager({
           {/* Priority Filter */}
           <select
             value={selectedPriorityFilter}
-            onChange={(e) => setSelectedPriorityFilter(e.target.value)}
+            onChange={(e) => setSelectedPriorityFilter(e.target.value as any)}
             className="bg-card border border-border text-foreground rounded-xl px-2.5 py-1.5 text-xs focus:outline-none cursor-pointer"
           >
             <option value="all">All Priorities</option>
