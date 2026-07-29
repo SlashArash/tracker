@@ -1,22 +1,37 @@
 import React, { useState } from 'react';
 import { X, Settings, Volume2, Clock, Lock, CheckCircle2, Shield, Sun, Moon } from 'lucide-react';
 import { saveSettingsBulk } from '../services/db';
+import { AppSettings, SoundAlertOption, AmbientSoundOption, ThemeOption } from '../types';
 
-export default function SettingsModal({ isOpen, settings, onClose, onRefreshSettings, onOpenLockSetup }) {
-  const [workDuration, setWorkDuration] = useState(settings.workDuration || 25);
-  const [shortBreakDuration, setShortBreakDuration] = useState(settings.shortBreakDuration || 5);
-  const [longBreakDuration, setLongBreakDuration] = useState(settings.longBreakDuration || 15);
-  const [longBreakInterval, setLongBreakInterval] = useState(settings.longBreakInterval || 4);
-  const [autoStartBreaks, setAutoStartBreaks] = useState(settings.autoStartBreaks || false);
-  const [soundVolume, setSoundVolume] = useState(settings.soundVolume ?? 0.7);
-  const [soundAlert, setSoundAlert] = useState(settings.soundAlert || 'chime');
-  const [ambientSound, setAmbientSound] = useState(settings.ambientSound || 'rain');
-  const [theme, setTheme] = useState(settings.theme || 'dark');
+export interface SettingsModalProps {
+  isOpen: boolean;
+  settings: AppSettings;
+  onClose: () => void;
+  onRefreshSettings: () => void;
+  onOpenLockSetup: () => void;
+}
+
+export default function SettingsModal({
+  isOpen,
+  settings,
+  onClose,
+  onRefreshSettings,
+  onOpenLockSetup
+}: SettingsModalProps) {
+  const [workDuration, setWorkDuration] = useState<number | string>(settings.workDuration || 25);
+  const [shortBreakDuration, setShortBreakDuration] = useState<number | string>(settings.shortBreakDuration || 5);
+  const [longBreakDuration, setLongBreakDuration] = useState<number | string>(settings.longBreakDuration || 15);
+  const [longBreakInterval, setLongBreakInterval] = useState<number | string>(settings.longBreakInterval || 4);
+  const [autoStartBreaks, setAutoStartBreaks] = useState<boolean>(settings.autoStartBreaks || false);
+  const [soundVolume, setSoundVolume] = useState<number | string>(settings.soundVolume ?? 0.7);
+  const [soundAlert, setSoundAlert] = useState<SoundAlertOption>(settings.soundAlert || 'chime');
+  const [ambientSound, setAmbientSound] = useState<AmbientSoundOption>(settings.ambientSound || 'rain');
+  const [theme, setTheme] = useState<ThemeOption>(settings.theme || 'dark');
   const [savedSuccess, setSavedSuccess] = useState(false);
 
   if (!isOpen) return null;
 
-  const handleSave = async (e) => {
+  const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
     await saveSettingsBulk({
       workDuration: Number(workDuration),
@@ -135,7 +150,7 @@ export default function SettingsModal({ isOpen, settings, onClose, onRefreshSett
             <div>
               <div className="flex items-center justify-between mb-1">
                 <label className="text-[11px] text-slate-400 light:text-slate-600">Master Volume</label>
-                <span className="font-mono text-slate-300 light:text-slate-700">{Math.round(soundVolume * 100)}%</span>
+                <span className="font-mono text-slate-300 light:text-slate-700">{Math.round(Number(soundVolume) * 100)}%</span>
               </div>
               <input
                 type="range"
@@ -153,7 +168,7 @@ export default function SettingsModal({ isOpen, settings, onClose, onRefreshSett
                 <label className="block text-[11px] text-slate-400 light:text-slate-600 mb-1">Completion Bell</label>
                 <select
                   value={soundAlert}
-                  onChange={(e) => setSoundAlert(e.target.value)}
+                  onChange={(e) => setSoundAlert(e.target.value as SoundAlertOption)}
                   className="w-full bg-slate-900 light:bg-slate-50 border border-slate-700 light:border-slate-300 text-slate-100 light:text-slate-900 rounded-xl px-3 py-2 focus:outline-none"
                 >
                   <option value="chime" className="bg-slate-900 light:bg-white text-slate-100 light:text-slate-900">Harmonic Chime</option>
@@ -166,7 +181,7 @@ export default function SettingsModal({ isOpen, settings, onClose, onRefreshSett
                 <label className="block text-[11px] text-slate-400 light:text-slate-600 mb-1">Ambient Background</label>
                 <select
                   value={ambientSound}
-                  onChange={(e) => setAmbientSound(e.target.value)}
+                  onChange={(e) => setAmbientSound(e.target.value as AmbientSoundOption)}
                   className="w-full bg-slate-900 light:bg-slate-50 border border-slate-700 light:border-slate-300 text-slate-100 light:text-slate-900 rounded-xl px-3 py-2 focus:outline-none"
                 >
                   <option value="rain" className="bg-slate-900 light:bg-white text-slate-100 light:text-slate-900">Gentle Rain (Brown)</option>

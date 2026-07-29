@@ -1,16 +1,23 @@
 import React from 'react';
-import { History, Clock, Trash2, Calendar, CheckCircle, Tag, Layers } from 'lucide-react';
+import { History, Clock, Trash2, Calendar, CheckCircle, Layers } from 'lucide-react';
 import { db } from '../services/db';
+import { Session, Project } from '../types';
 
-export default function SessionHistory({ sessions = [], projects = [], onRefresh }) {
-  const handleDeleteSession = async (sessionId) => {
+export interface SessionHistoryProps {
+  sessions?: Session[];
+  projects?: Project[];
+  onRefresh: () => void;
+}
+
+export default function SessionHistory({ sessions = [], projects = [], onRefresh }: SessionHistoryProps) {
+  const handleDeleteSession = async (sessionId: string) => {
     if (!window.confirm('Delete this session log entry?')) return;
     await db.sessions.delete(sessionId);
     onRefresh();
   };
 
   // Helper formatting seconds to "Xm Ys" or "Xh Ym"
-  const formatDuration = (seconds) => {
+  const formatDuration = (seconds: number): string => {
     if (!seconds) return '0m';
     const hrs = Math.floor(seconds / 3600);
     const mins = Math.floor((seconds % 3600) / 60);
@@ -123,7 +130,7 @@ export default function SessionHistory({ sessions = [], projects = [], onRefresh
                             {dateFormatted} at {timeFormatted}
                           </span>
                           <span className="capitalize text-slate-400 light:text-slate-600 font-medium">
-                            {sess.mode === 'stopwatch' ? 'Stopwatch' : 'Pomodoro'}
+                            {sess.mode === ('stopwatch' as any) ? 'Stopwatch' : 'Pomodoro'}
                           </span>
                         </div>
                       </div>

@@ -1,6 +1,17 @@
-import Dexie from 'dexie';
+import Dexie, { type EntityTable } from 'dexie';
+import { Project, Task, Session, AppSettings, LogCompletedSessionParams } from '../types';
 
-export const db = new Dexie('GojodoroDB');
+export interface SettingItem {
+  key: string;
+  value: any;
+}
+
+export const db = new Dexie('GojodoroDB') as Dexie & {
+  projects: EntityTable<Project, 'id'>;
+  tasks: EntityTable<Task, 'id'>;
+  sessions: EntityTable<Session, 'id'>;
+  settings: EntityTable<SettingItem, 'key'>;
+};
 
 db.version(1).stores({
   projects: 'id, name, color, createdAt',
@@ -10,7 +21,7 @@ db.version(1).stores({
 });
 
 // Default initial settings
-export const DEFAULT_SETTINGS = {
+export const DEFAULT_SETTINGS: AppSettings = {
   workDuration: 25, // minutes
   shortBreakDuration: 5,
   longBreakDuration: 15,
@@ -18,16 +29,16 @@ export const DEFAULT_SETTINGS = {
   autoStartBreaks: false,
   autoStartPomodoros: false,
   soundVolume: 0.7,
-  soundAlert: 'chime', // chime, bell, synth
-  ambientSound: 'none', // none, white, pink, rain
+  soundAlert: 'chime',
+  ambientSound: 'none',
   isPasscodeEnabled: false,
   passcodeHash: null,
   passcodeSalt: null,
-  theme: 'dark' // dark | light
+  theme: 'dark'
 };
 
 // Seed default settings if empty
-export async function initDatabase() {
+export async function initDatabase(): Promise<void> {
   const settingsCount = await db.settings.count();
   if (settingsCount === 0) {
     for (const [key, value] of Object.entries(DEFAULT_SETTINGS)) {
@@ -37,12 +48,11 @@ export async function initDatabase() {
 
   const projectsCount = await db.projects.count();
   if (projectsCount === 0) {
-    // Add default sample project
     const sampleProjectId = 'proj_' + Date.now();
     await db.projects.add({
       id: sampleProjectId,
       name: 'General Deep Work',
-      color: '#ec4899', // Pink
+      color: '#ec4899',
       createdAt: new Date().toISOString()
     });
 
@@ -57,28 +67,35 @@ export async function initDatabase() {
 }
 
 // Helper getter & setter for settings
-export async function getSettings() {
+export async function getSettings(): Promise<AppSettings> {
   const rows = await db.settings.toArray();
-  const settingsMap = { ...DEFAULT_SETTINGS };
+  const settingsMap: AppSettings = { ...DEFAULT_SETTINGS };
   rows.forEach(item => {
     settingsMap[item.key] = item.value;
   });
   return settingsMap;
 }
 
-export async function saveSetting(key, value) {
+export async function saveSetting(key: string, value: any): Promise<void> {
   await db.settings.put({ key, value });
 }
 
-export async function saveSettingsBulk(settingsObj) {
+export async function saveSettingsBulk(settingsObj: Partial<AppSettings>): Promise<void> {
   const entries = Object.entries(settingsObj).map(([key, value]) => ({ key, value }));
   await db.settings.bulkPut(entries);
 }
 
 // Session log helpers
-export async function logCompletedSession({ projectId, taskId, mode, durationSeconds, categoryName, taskName }) {
-  const session = {
-    id: 'sess_' + Date.now() + '_' + Math.random().toString(36).substr(2, 4),
+export async function logCompletedSession({
+  projectId,
+  taskId,
+  mode,
+  durationSeconds,
+  categoryName,
+  taskName
+}: LogCompletedSessionParams): Promise<Session> {
+  const session: Session = {
+    id: 'sess_' + Date.now() + '_' + Math.random().toString(36).substring(2, 6),
     projectId: projectId || null,
     taskId: taskId || null,
     categoryName: categoryName || 'Uncategorized',
@@ -92,7 +109,7 @@ export async function logCompletedSession({ projectId, taskId, mode, durationSec
 }
 
 // Reset / Purge DB for imports
-export async function clearAllData() {
+export async function clearAllData(): Promise<void> {
   await db.projects.clear();
   await db.tasks.clear();
   await db.sessions.clear();

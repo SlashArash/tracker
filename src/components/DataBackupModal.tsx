@@ -3,12 +3,18 @@ import { X, Download, Upload, ShieldCheck, AlertCircle, FileJson, CheckCircle2 }
 import { db, clearAllData, getSettings } from '../services/db';
 import { encryptData, decryptData } from '../services/crypto';
 
-export default function DataBackupModal({ isOpen, onClose, onRefresh }) {
+export interface DataBackupModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  onRefresh: () => void;
+}
+
+export default function DataBackupModal({ isOpen, onClose, onRefresh }: DataBackupModalProps) {
   const [exportPasscode, setExportPasscode] = useState('');
   const [importPasscode, setImportPasscode] = useState('');
   const [useEncryption, setUseEncryption] = useState(false);
-  const [importFile, setImportFile] = useState(null);
-  const [message, setMessage] = useState({ type: '', text: '' });
+  const [importFile, setImportFile] = useState<File | null>(null);
+  const [message, setMessage] = useState<{ type: 'success' | 'error' | ''; text: string }>({ type: '', text: '' });
   const [loading, setLoading] = useState(false);
 
   if (!isOpen) return null;
@@ -64,7 +70,7 @@ export default function DataBackupModal({ isOpen, onClose, onRefresh }) {
     }
   };
 
-  const handleImport = async (e) => {
+  const handleImport = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!importFile) {
       setMessage({ type: 'error', text: 'Please select a JSON backup file to import.' });
@@ -115,9 +121,9 @@ export default function DataBackupModal({ isOpen, onClose, onRefresh }) {
         onRefresh();
         onClose();
       }, 1500);
-    } catch (err) {
+    } catch (err: any) {
       console.error(err);
-      setMessage({ type: 'error', text: err.message || 'Failed to parse or decrypt backup file.' });
+      setMessage({ type: 'error', text: err?.message || 'Failed to parse or decrypt backup file.' });
     } finally {
       setLoading(false);
     }
@@ -209,7 +215,7 @@ export default function DataBackupModal({ isOpen, onClose, onRefresh }) {
             <input
               type="file"
               accept=".json"
-              onChange={(e) => setImportFile(e.target.files[0] || null)}
+              onChange={(e) => setImportFile(e.target.files?.[0] || null)}
               className="w-full text-xs text-slate-400 light:text-slate-600 file:mr-3 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-slate-800 light:file:bg-slate-200 file:text-white light:file:text-slate-800 hover:file:bg-slate-700 light:hover:file:bg-slate-300 cursor-pointer"
             />
 

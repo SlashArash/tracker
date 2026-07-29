@@ -3,11 +3,19 @@
  * Clean, lightweight, and requiring no external audio asset downloads.
  */
 
-let audioCtx = null;
-let ambientSource = null;
-let ambientGainNode = null;
+import { SoundAlertOption, AmbientSoundOption } from '../types';
 
-function getAudioContext() {
+declare global {
+  interface Window {
+    webkitAudioContext?: typeof AudioContext;
+  }
+}
+
+let audioCtx: AudioContext | null = null;
+let ambientSource: AudioBufferSourceNode | null = null;
+let ambientGainNode: GainNode | null = null;
+
+function getAudioContext(): AudioContext | null {
   if (!audioCtx) {
     const AudioContextClass = window.AudioContext || window.webkitAudioContext;
     if (AudioContextClass) {
@@ -21,7 +29,7 @@ function getAudioContext() {
 }
 
 // Play notification sound chime
-export function playAlertSound(type = 'chime', volume = 0.7) {
+export function playAlertSound(type: SoundAlertOption = 'chime', volume: number = 0.7): void {
   try {
     const ctx = getAudioContext();
     if (!ctx) return;
@@ -95,7 +103,7 @@ export function playAlertSound(type = 'chime', volume = 0.7) {
 }
 
 // Stop current ambient sound
-export function stopAmbientSound() {
+export function stopAmbientSound(): void {
   if (ambientSource) {
     try {
       ambientSource.stop();
@@ -112,7 +120,7 @@ export function stopAmbientSound() {
 }
 
 // Start ambient sound generator (white, pink, rain/brown)
-export function startAmbientSound(type = 'rain', volume = 0.3) {
+export function startAmbientSound(type: AmbientSoundOption = 'rain', volume: number = 0.3): void {
   stopAmbientSound();
   if (type === 'none' || !type) return;
 
@@ -178,7 +186,7 @@ export function startAmbientSound(type = 'rain', volume = 0.3) {
   }
 }
 
-export function updateAmbientVolume(volume = 0.3) {
+export function updateAmbientVolume(volume: number = 0.3): void {
   if (ambientGainNode && audioCtx) {
     ambientGainNode.gain.setValueAtTime(volume * 0.25, audioCtx.currentTime);
   }

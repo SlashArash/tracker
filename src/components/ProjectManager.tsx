@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
-import { Plus, Trash2, CheckCircle2, Circle, FolderPlus, Tag, Check, Edit2, ChevronDown, ChevronUp } from 'lucide-react';
+import { Plus, Trash2, CheckCircle2, Circle, FolderPlus, Check, ChevronDown, ChevronUp } from 'lucide-react';
 import { db } from '../services/db';
+import { Project, Task } from '../types';
 
 const COLOR_PALETTE = [
   '#ec4899', // Pink
@@ -15,14 +16,20 @@ const COLOR_PALETTE = [
   '#8b5cf6', // Violet
 ];
 
-export default function ProjectManager({ projects = [], tasks = [], onRefresh }) {
+export interface ProjectManagerProps {
+  projects?: Project[];
+  tasks?: Task[];
+  onRefresh: () => void;
+}
+
+export default function ProjectManager({ projects = [], tasks = [], onRefresh }: ProjectManagerProps) {
   const [newProjectName, setNewProjectName] = useState('');
   const [newProjectColor, setNewProjectColor] = useState(COLOR_PALETTE[0]);
   const [isCreatingProject, setIsCreatingProject] = useState(false);
-  const [expandedProjectId, setExpandedProjectId] = useState(null);
-  const [newTaskNames, setNewTaskNames] = useState({}); // { [projectId]: string }
+  const [expandedProjectId, setExpandedProjectId] = useState<string | null>(null);
+  const [newTaskNames, setNewTaskNames] = useState<Record<string, string>>({});
 
-  const handleAddProject = async (e) => {
+  const handleAddProject = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newProjectName.trim()) return;
 
@@ -40,7 +47,7 @@ export default function ProjectManager({ projects = [], tasks = [], onRefresh })
     onRefresh();
   };
 
-  const handleDeleteProject = async (projectId) => {
+  const handleDeleteProject = async (projectId: string) => {
     if (!window.confirm('Delete this project and all its tasks?')) return;
     await db.projects.delete(projectId);
     const projectTasks = tasks.filter(t => t.projectId === projectId);
@@ -50,13 +57,13 @@ export default function ProjectManager({ projects = [], tasks = [], onRefresh })
     onRefresh();
   };
 
-  const handleAddTask = async (projectId, e) => {
+  const handleAddTask = async (projectId: string, e: React.FormEvent) => {
     e.preventDefault();
     const taskName = newTaskNames[projectId];
     if (!taskName || !taskName.trim()) return;
 
     await db.tasks.add({
-      id: 'task_' + Date.now() + '_' + Math.random().toString(36).substr(2, 4),
+      id: 'task_' + Date.now() + '_' + Math.random().toString(36).substring(2, 6),
       projectId,
       name: taskName.trim(),
       completed: false,
@@ -67,12 +74,12 @@ export default function ProjectManager({ projects = [], tasks = [], onRefresh })
     onRefresh();
   };
 
-  const handleToggleTask = async (task) => {
+  const handleToggleTask = async (task: Task) => {
     await db.tasks.update(task.id, { completed: !task.completed });
     onRefresh();
   };
 
-  const handleDeleteTask = async (taskId) => {
+  const handleDeleteTask = async (taskId: string) => {
     await db.tasks.delete(taskId);
     onRefresh();
   };

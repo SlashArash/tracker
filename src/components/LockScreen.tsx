@@ -3,22 +3,36 @@ import { Lock, KeyRound, ShieldCheck, ArrowRight, AlertCircle } from 'lucide-rea
 import { verifyPasscode, hashPasscode } from '../services/crypto';
 import { saveSetting } from '../services/db';
 
-export default function LockScreen({ isSetupMode, storedHash, storedSalt, onUnlock, onPasscodeCreated }) {
+export interface LockScreenProps {
+  isSetupMode: boolean;
+  storedHash?: string | null;
+  storedSalt?: string | null;
+  onUnlock?: (passcode: string) => void;
+  onPasscodeCreated?: (passcode: string, hashB64: string, saltB64: string) => void;
+}
+
+export default function LockScreen({
+  isSetupMode,
+  storedHash,
+  storedSalt,
+  onUnlock,
+  onPasscodeCreated
+}: LockScreenProps) {
   const [passcode, setPasscode] = useState('');
   const [confirmPasscode, setConfirmPasscode] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
-  const handleUnlock = async (e) => {
+  const handleUnlock = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
     if (!passcode) return;
 
     setLoading(true);
     try {
-      const isValid = await verifyPasscode(passcode, storedHash, storedSalt);
+      const isValid = await verifyPasscode(passcode, storedHash || null, storedSalt || null);
       if (isValid) {
-        onUnlock(passcode);
+        onUnlock?.(passcode);
       } else {
         setError('Incorrect passcode. Please try again.');
         setPasscode('');
@@ -30,7 +44,7 @@ export default function LockScreen({ isSetupMode, storedHash, storedSalt, onUnlo
     }
   };
 
-  const handleCreatePasscode = async (e) => {
+  const handleCreatePasscode = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
 
@@ -49,7 +63,7 @@ export default function LockScreen({ isSetupMode, storedHash, storedSalt, onUnlo
       await saveSetting('isPasscodeEnabled', true);
       await saveSetting('passcodeHash', hashB64);
       await saveSetting('passcodeSalt', saltB64);
-      onPasscodeCreated(passcode, hashB64, saltB64);
+      onPasscodeCreated?.(passcode, hashB64, saltB64);
     } catch (err) {
       setError('Failed to save passcode.');
     } finally {

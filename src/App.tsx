@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { Timer as TimerIcon, FolderGit2, History, Settings as SettingsIcon, FileJson, Lock, Shield, Sparkles, Sun, Moon } from 'lucide-react';
+import { Timer as TimerIcon, FolderGit2, History, Settings as SettingsIcon, FileJson, Lock, Sparkles, Sun, Moon } from 'lucide-react';
 import { db, initDatabase, getSettings, saveSetting } from './services/db';
+import { Project, Task, Session, AppSettings } from './types';
 import Timer from './components/Timer';
 import ProjectManager from './components/ProjectManager';
 import SessionHistory from './components/SessionHistory';
@@ -8,22 +9,24 @@ import SettingsModal from './components/SettingsModal';
 import DataBackupModal from './components/DataBackupModal';
 import LockScreen from './components/LockScreen';
 
+export type TabType = 'timer' | 'projects' | 'history';
+
 export default function App() {
-  const [activeTab, setActiveTab] = useState('timer'); // 'timer' | 'projects' | 'history'
-  const [isLocked, setIsLocked] = useState(false);
-  const [isLockSetup, setIsLockSetup] = useState(false);
-  const [activePasscode, setActivePasscode] = useState(null);
+  const [activeTab, setActiveTab] = useState<TabType>('timer');
+  const [isLocked, setIsLocked] = useState<boolean>(false);
+  const [isLockSetup, setIsLockSetup] = useState<boolean>(false);
+  const [activePasscode, setActivePasscode] = useState<string | null>(null);
 
   // App data state
-  const [projects, setProjects] = useState([]);
-  const [tasks, setTasks] = useState([]);
-  const [sessions, setSessions] = useState([]);
-  const [settings, setSettings] = useState(null);
-  const [isInitializing, setIsInitializing] = useState(true);
+  const [projects, setProjects] = useState<Project[]>([]);
+  const [tasks, setTasks] = useState<Task[]>([]);
+  const [sessions, setSessions] = useState<Session[]>([]);
+  const [settings, setSettings] = useState<AppSettings | null>(null);
+  const [isInitializing, setIsInitializing] = useState<boolean>(true);
 
   // Modals state
-  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
-  const [isBackupOpen, setIsBackupOpen] = useState(false);
+  const [isSettingsOpen, setIsSettingsOpen] = useState<boolean>(false);
+  const [isBackupOpen, setIsBackupOpen] = useState<boolean>(false);
 
   // Load database and settings on startup
   const loadAppData = async () => {
@@ -55,12 +58,12 @@ export default function App() {
     loadAppData();
   }, []);
 
-  const handleUnlock = (passcode) => {
+  const handleUnlock = (passcode: string) => {
     setActivePasscode(passcode);
     setIsLocked(false);
   };
 
-  const handlePasscodeCreated = (passcode) => {
+  const handlePasscodeCreated = (passcode: string) => {
     setActivePasscode(passcode);
     setIsLockSetup(false);
     setIsLocked(false);

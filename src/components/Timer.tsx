@@ -1,33 +1,39 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Play, Pause, RotateCcw, SkipForward, Volume2, VolumeX, FolderGit2, CheckCircle2, CloudRain, Flame, Coffee, Sparkles } from 'lucide-react';
+import { Play, Pause, RotateCcw, SkipForward, CloudRain, Flame, Coffee, Sparkles } from 'lucide-react';
 import { playAlertSound, startAmbientSound, stopAmbientSound } from '../services/audio';
 import { logCompletedSession } from '../services/db';
+import { AppSettings, Project, Task, TimerMode } from '../types';
+
+export interface TimerProps {
+  settings: AppSettings;
+  projects?: Project[];
+  tasks?: Task[];
+  onSessionLogged?: () => void;
+}
+
+export type ExtendedTimerMode = TimerMode | 'stopwatch';
 
 export default function Timer({
   settings,
   projects = [],
   tasks = [],
   onSessionLogged
-}) {
-  const [mode, setMode] = useState('work'); // 'work' | 'shortBreak' | 'longBreak' | 'stopwatch'
-  const [timeLeft, setTimeLeft] = useState(settings.workDuration * 60);
-  const [isRunning, setIsRunning] = useState(false);
-  const [completedCycles, setCompletedCycles] = useState(0);
-  const [selectedProjectId, setSelectedProjectId] = useState('');
-  const [selectedTaskId, setSelectedTaskId] = useState('');
-  const [isAmbientPlaying, setIsAmbientPlaying] = useState(false);
+}: TimerProps) {
+  const [mode, setMode] = useState<ExtendedTimerMode>('work');
+  const [timeLeft, setTimeLeft] = useState<number>(settings.workDuration * 60);
+  const [isRunning, setIsRunning] = useState<boolean>(false);
+  const [completedCycles, setCompletedCycles] = useState<number>(0);
+  const [selectedProjectId, setSelectedProjectId] = useState<string>('');
+  const [selectedTaskId, setSelectedTaskId] = useState<string>('');
+  const [isAmbientPlaying, setIsAmbientPlaying] = useState<boolean>(false);
 
-  // Reference for timer interval
-  const timerRef = useRef(null);
-  const startTimeRef = useRef(null);
-  const elapsedTimeRef = useRef(0); // For stopwatch mode
+  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  // Filter tasks matching selected project
   const availableTasks = tasks.filter(t => t.projectId === selectedProjectId && !t.completed);
-
-  // Selected object details
   const selectedProject = projects.find(p => p.id === selectedProjectId);
   const selectedTask = tasks.find(t => t.id === selectedTaskId);
+
+  const isLight = settings.theme === 'light';
 
   // Sync timer duration when settings or mode change (if timer is stopped)
   useEffect(() => {
@@ -79,19 +85,17 @@ export default function Timer({
     setIsRunning(false);
     playAlertSound(settings.soundAlert || 'chime', settings.soundVolume || 0.7);
 
-    // Calculate logged duration
     let targetDuration = 0;
     if (mode === 'work') targetDuration = settings.workDuration * 60;
     else if (mode === 'shortBreak') targetDuration = settings.shortBreakDuration * 60;
     else if (mode === 'longBreak') targetDuration = settings.longBreakDuration * 60;
 
-    // Log session to IndexedDB if it was a work or stopwatch session
     if (mode === 'work' || mode === 'stopwatch') {
       const durationLogged = mode === 'stopwatch' ? timeLeft : targetDuration;
       await logCompletedSession({
         projectId: selectedProjectId || null,
         taskId: selectedTaskId || null,
-        mode,
+        mode: mode === 'stopwatch' ? 'work' : mode,
         durationSeconds: durationLogged,
         categoryName: selectedProject ? selectedProject.name : 'Uncategorized',
         taskName: selectedTask ? selectedTask.name : null
@@ -100,7 +104,6 @@ export default function Timer({
       if (onSessionLogged) onSessionLogged();
     }
 
-    // Auto-advance mode logic
     if (mode === 'work') {
       const nextCycle = completedCycles + 1;
       setCompletedCycles(nextCycle);
@@ -148,14 +151,12 @@ export default function Timer({
     }
   };
 
-  // Helper formatting mm:ss
-  const formatTime = (seconds) => {
+  const formatTime = (seconds: number): string => {
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
     return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
   };
 
-  // Calculate SVG Circle Stroke Offset
   const totalDurationSeconds =
     mode === 'work'
       ? settings.workDuration * 60
@@ -163,13 +164,13 @@ export default function Timer({
       ? settings.shortBreakDuration * 60
       : mode === 'longBreak'
       ? settings.longBreakDuration * 60
-      : 3600; // placeholder max for stopwatch
+      : 3600;
 
   const progressFraction = mode === 'stopwatch'
     ? (timeLeft % 3600) / 3600
     : (totalDurationSeconds - timeLeft) / totalDurationSeconds;
 
-  const strokeDasharray = 2 * Math.PI * 140; // R = 140
+  const strokeDasharray = 2 * Math.PI * 140;
   const strokeDashoffset = strokeDasharray * (1 - Math.min(1, Math.max(0, progressFraction)));
 
   const isBreakMode = mode === 'shortBreak' || mode === 'longBreak';
